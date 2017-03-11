@@ -1,0 +1,7 @@
+modEntry = {
+         Client = "lua/BeaconOpti/BO_Client.lua",
+         Server = "lua/BeaconOpti/BO_Server.lua",
+         Shared = "lua/BeaconOpti/BO_Shared.lua",
+         FileHooks = "lua/BeaconOpti/BO_FileHooks.lua",
+         Priority = 6
+}
