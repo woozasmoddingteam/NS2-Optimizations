@@ -1,4 +1,6 @@
+Script.Load("lua/GeneralOpti/Closure.lua")
+
 modEntry = {
-         FileHooks = "lua/GeneralOpti/GO_FileHooks.lua",
+         FileHooks = "lua/GeneralOpti/FileHooks.lua",
          Priority = 15
 }
