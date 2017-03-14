@@ -139,7 +139,7 @@ end
 function GetEntitiesForTeamWithinXZRange(className, teamNumber, origin, range)
 
 	local inRangeXZFilterFunction = Closure [=[
-		self teamNumber, origin, range
+		self teamNumber origin range
 		args entity
 		local inRange = (entity:GetOrigin() - origin):GetLengthSquaredXZ() <= (range * range)
 		return inRange and HasMixin(entity, "Team") and entity:GetTeamNumber() == teamNumber
@@ -153,7 +153,7 @@ end
 function GetEntitiesForTeamWithinRangeAreVisible(className, teamNumber, origin, range, visibleState)
 
 	local teamAndVisibleStateFilterFunction = CLambda [==[
-		self teamNumber, visibleState
+		self teamNumber visibleState
 		args entity
 		HasMixin(entity, "Team") and entity:GetTeamNumber() == teamNumber and entity:GetIsVisible() == visibleState
 	]==] {teamNumber, visibileState}
@@ -169,7 +169,7 @@ function GetEntitiesWithinRangeAreVisible(className, origin, range, visibleState
 	local visibleStateFilterFunction = CLambda [=[
 		self visibleState
 		args entity
-		return entity:GetIsVisible() == visibleState
+		entity:GetIsVisible() == visibleState
 	]=] {visibleState}
 
     return AltGetEntitiesWithFilter(Shared_GetEntitiesWithTagInRange("class:" .. className, origin, range), visibleStateFilterFunction)
@@ -179,7 +179,7 @@ end
 function GetEntitiesWithinXZRangeAreVisible(className, origin, range, visibleState)
 
 	local func = Closure [=[
-		self visibleState, origin, range
+		self visibleState origin range
 		args entity
 		local inRange = (entity:GetOrigin() - origin):GetLengthSquaredXZ() <= (range * range)
         return inRange and entity:GetIsVisible() == visibleState

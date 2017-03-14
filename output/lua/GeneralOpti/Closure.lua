@@ -131,16 +131,16 @@ end
 
 local function fargs(t, b)
 	if #t > 0 then
-		return (not b and "," or "") .. table.concat(t)
+		return (not b and "," or "") .. table.concat(t, ',')
 	else
-		return ""
+		return (not b and "," or "") .. "..."
 	end
 end
 
 local function sargs(t)
 	if #t == 0 then return "" end
 
-	local s = "local " .. table.concat(t) .. "="
+	local s = "local " .. table.concat(t, ',') .. "="
 	for i = 1, #t-1 do
 		s = s .. "self[" .. i .. "],"
 	end
@@ -174,12 +174,7 @@ local function newCLambda(def)
 	local old_def = def
 	local self, args, def = parseArguments(def)
 
-	local fargs_ret = fargs(args)
-	if #fargs_ret == 0 then
-		fargs_ret = ",..."
-	end
-
-	local total = "return function(self " .. fargs_ret .. ") " .. sargs(self) .. "return " .. def .. " end"
+	local total = "return function(self " .. fargs(args) .. ") " .. sargs(self) .. "return " .. def .. " end"
 	print(total)
 	local f, msg = loadstring(total, "CLambda")
 	if not f then
@@ -202,12 +197,7 @@ local function newLambda(def)
 
 	assert(#self == 0, "Can not supply self arguments in a lambda! Use a CLambda instead.")
 
-	local fargs_ret = fargs(args, true)
-	if #fargs_ret == 0 then
-		fargs_ret = "..."
-	end
-
-	local total = "return function(" .. fargs_ret .. ") return " .. def .. " end"
+	local total = "return function(" .. fargs(args, true) .. ") return " .. def .. " end"
 	print(total)
 	local f, msg = loadstring(total, "Lambda")
 	if not f then
