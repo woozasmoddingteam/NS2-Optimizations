@@ -1,5 +1,7 @@
 ModLoader.SetupFileHook("lua/Table.lua", "lua/GeneralOpti/Table.lua", "post")
 ModLoader.SetupFileHook("lua/Entity.lua", "lua/GeneralOpti/Entity.lua", "post")
 ModLoader.SetupFileHook("lua/Weapons/Alien/Web.lua","lua/GeneralOpti/Web.lua", "post")
+ModLoader.SetupFileHook("lua/Player.lua", "lua/GeneralOpti/Player.lua", "post")
+ModLoader.SetupFileHook("lua/Utility.lua", "lua/GeneralOpti/Utility.lua", "post")
 --ModLoader.SetupFileHook("lua/Clog.lua",                     "lua/GeneralOpti/GO_Clog.lua", "post")
 --ModLoader.SetupFileHook("lua/ClogFallMixin.lua",            "lua/GeneralOpti/GO_ClogFallMixin.lua", "post")

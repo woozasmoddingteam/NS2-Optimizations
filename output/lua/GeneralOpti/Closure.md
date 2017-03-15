@@ -147,7 +147,7 @@ Examples:
 ```lua
 local x, y = 2, 3
 local f = Closure [==[
-	self x, y
+	self x y
 	return x + y * ...
 ]==] {x, y}
 
@@ -162,7 +162,7 @@ Examples:
 ```lua
 local x, y = 2, 3
 local f = CLambda [==[
-	self x, y
+	self x y
 	x + y * ...
 ]==] {x, y}
 

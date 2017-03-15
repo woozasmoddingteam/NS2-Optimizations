@@ -68,10 +68,15 @@ if (Server) then
    end
 
    --------------------
+   local disable_smoothing = true
 
    local spawn_iterator = 1
    local ObservatoryTriggerDistressBeacon = Observatory.TriggerDistressBeacon
    function Observatory:TriggerDistressBeacon()
+	   if disable_smoothing then
+		   return ObservatoryTriggerDistressBeacon(self)
+	   end
+
       spawn_iterator = 1
 
       local it = 0
@@ -88,7 +93,7 @@ if (Server) then
       end
 
       local nearest_CC_locname = nil
-      local nearest = GetNearest(self:GetOrigin(), "CommandStation", self:GetTeamNumber(), function(ent) return ent:GetIsBuilt() and ent:GetIsAlive() end)
+      local nearest = GetNearest(self:GetOrigin(), "CommandStation", self:GetTeamNumber(), Lambda [[args ent; ent:GetIsBuilt() and ent:GetIsAlive()]])
       if nearest then
          nearest_CC_locname = nearest:GetLocationName()
       end
@@ -100,15 +105,13 @@ if (Server) then
       nb_weapon_added = 0
       for _, p in ipairs(GetEntitiesForTeam("Marine", self:GetTeamNumber()))
       do
-         if (p and p.GetIsAlive and p:GetIsAlive()) then
+         if p and p:GetIsAlive() then
             table.insert(entities, p)
             nb_added = nb_added + 1
-            if (p.GetWeapons) then -- Just for safety
-               for i, weapon in ipairs(p:GetWeapons()) do
-                  table.insert(entities, weapon)
-                  nb_weapon_added = nb_weapon_added + 1
-               end
-            end
+           for i, weapon in ipairs(p:GetWeapons()) do
+              table.insert(entities, weapon)
+              nb_weapon_added = nb_weapon_added + 1
+           end
          end
       end
       if (nb_added > 0) then
@@ -118,7 +121,7 @@ if (Server) then
       -- but only aliens nearby the beacon location
       -- Edit: Take all the aliens: before the 3s delay the aliens are out of relevancy range
       --       so we need to take them into account (and in tunnels)
-      for _, teamnb in ipairs({GetEnemyTeamNumber(self:GetTeamNumber()), self:GetTeamNumber()})
+      for _, teamnb in ipairs {GetEnemyTeamNumber(self:GetTeamNumber()), self:GetTeamNumber()}
       do
          nb_added = 0
          nb_weapon_added = 0
@@ -127,15 +130,13 @@ if (Server) then
                                                           kMaxRelevancyDistance + 10))
          do
             -- Exclude marines, they have already been added (see above)
-            if (p and p.GetIsAlive and p:GetIsAlive() and not p:isa("Marine")) then
+            if p and p:GetIsAlive() and not p:isa("Marine") then
                table.insert(entities, p)
                nb_added = nb_added + 1
-               if (p.GetWeapons) then -- Just for safety
-                  for i, weapon in ipairs(p:GetWeapons()) do
-                     table.insert(entities, weapon)
-                     nb_weapon_added = nb_weapon_added + 1
-                  end
-               end
+              for i, weapon in ipairs(p:GetWeapons()) do
+                 table.insert(entities, weapon)
+                 nb_weapon_added = nb_weapon_added + 1
+              end
             end
          end
          if (nb_added > 0) then
@@ -171,7 +172,7 @@ if (Server) then
             -- Only marines/exo needs to be added into relevancy for everyone, other stuff don't get teleported
             mask = bit.bor(kRelevantToTeam1, kRelevantToTeam2)
          else
-            mask = bit.bor(kRelevantToTeam1, 0)
+            mask = kRelevantToTeam1
          end
 
          -- Log("BeaconOpti mod: SmoothBeacon: '" .. EntityToString(ent) .. "(" .. ent:GetId() .. ")" .. "'"
@@ -438,5 +439,3 @@ if (Server) then
    end
 
 end
-
-

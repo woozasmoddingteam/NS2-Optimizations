@@ -18,8 +18,8 @@ if (Server) then
       local mask = self.BO_relevancy_mask
 
       self.BO_relevancy_mask = nil
-      if (self and mask and self.SetIncludeRelevancyMask) then
-         local id = self.GetId and self:GetId() or 0
+      if mask and self.SetIncludeRelevancyMask then
+         -- local id = self.GetId and self:GetId() or 0
          -- Log("BeaconOpti mod: Include into relevancy '" .. EntityToString(self) .. "' (id " .. tostring(id) .. ")")
          self:SetIncludeRelevancyMask(mask)
       end
