@@ -14,7 +14,10 @@ local metatable = {
 local detected_classes = {};
 
 function DetectMixins(cls)
-	assert(not detected_classes[cls], "Duplicated class definition!");
+	if detected_classes[cls] then
+		Log("WARNING: Duplicated class definition of %s!", getmetatable(cls).name)
+		return
+	end
 	detected_classes[cls] = true;
 	local meta = getmetatable(cls);
 
