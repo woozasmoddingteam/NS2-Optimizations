@@ -2,7 +2,7 @@
 if true then
 	return
 end
-  
+
 function EntityFilterOne(entity)
 	return CLambda [[ ... == self[1] ]] {entity}
 end
@@ -21,7 +21,6 @@ end
 
 function EntityFilterOnly(entity)
 	return CLambda [[ ... ~= self[1] ]] {entity}
-    return function(test) return entity ~= test end
 end
 
 -- filter out all entities
@@ -44,5 +43,3 @@ end
 function EntityFilterMixin(mixinType)
 	return CLambda [[HasMixin(..., self[1])]] {mixinType}
 end
-
-
