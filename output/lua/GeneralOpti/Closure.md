@@ -198,3 +198,4 @@ This helps with caching traces.
 They only support **1** self-argument, and it's enclosed in parentheses ('()'), not braces ('{}').
 They will also compile a new function for each different argument pair passed.
 This makes it unsuitable for use with table literals.
+They also don't support the `self` syntax sugar.

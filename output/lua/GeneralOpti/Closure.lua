@@ -215,6 +215,8 @@ local function newSClosure(def)
 	local old_def = def
 	local self, args, def = parseArguments(def)
 
+	assert(#self == 0, "Can not supply self arguments in a SClosure! I don't really know what you tried to do.")
+
 	local total = "return function(self " .. fargs(args) .. ") " .. sargs(self) .. def .. " end"
 	print(total)
 	local f, msg = loadstring(total, "SClosure")
