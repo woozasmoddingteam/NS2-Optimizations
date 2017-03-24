@@ -3,6 +3,7 @@ local print = Shared and Shared.Message or print
 local closures = {}
 local clambdas = {}
 local lambdas  = {}
+local sclosures = {}
 
 -- Other types of whitespace not supported!
 local space     = string.byte(' ')
@@ -157,7 +158,7 @@ local function newClosure(def)
 	print(total)
 	local f, msg = loadstring(total, "Closure")
 	if not f then
-		assert(nil, "Error constructing closure: `" .. total .. "`! Reason: " .. msg)
+		assert(nil, "Error constructing Closure: `" .. total .. "`! Reason: " .. msg)
 		return
 	end
 	f = f()
@@ -178,7 +179,7 @@ local function newCLambda(def)
 	print(total)
 	local f, msg = loadstring(total, "CLambda")
 	if not f then
-		assert(nil, "Error constructing clambda: `" .. total .. "`! Reason: " .. msg)
+		assert(nil, "Error constructing CLambda: `" .. total .. "`! Reason: " .. msg)
 		return
 	end
 	f = f()
@@ -201,13 +202,45 @@ local function newLambda(def)
 	print(total)
 	local f, msg = loadstring(total, "Lambda")
 	if not f then
-		assert(nil, "Error constructing lambda: `" .. total .. "`! Reason: " .. msg)
+		assert(nil, "Error constructing Lambda: `" .. total .. "`! Reason: " .. msg)
 		return
 	end
 	f = f()
 
 	lambdas[old_def] = f
 	return f
+end
+
+local function newSClosure(def)
+	local old_def = def
+	local self, args, def = parseArguments(def)
+
+	local total = "return function(self " .. fargs(args) .. ") " .. sargs(self) .. def .. " end"
+	print(total)
+	local f, msg = loadstring(total, "SClosure")
+	if not f then
+		assert(nil, "Error constructing SClosure: `" .. total .. "`! Reason: " .. msg)
+		return
+	end
+	f = f()
+
+	local funcs = setmetatable({}, {
+		__mode = "kv" -- Weak
+	})
+
+	local function newSClosureInst(self)
+		local inst = function(...)
+			return f(self, ...)
+		end
+		funcs[self] = inst
+		return inst
+	end
+
+	local generator = function(self)
+		return funcs[self] or newSClosureInst(self)
+	end
+	sclosures[old_def] = generator
+	return generator
 end
 
 function Closure(def)
@@ -220,6 +253,10 @@ end
 
 function Lambda(def)
 	return lambdas[def] or newLambda(def)
+end
+
+function SClosure(def)
+	return sclosures[def] or newSClosure(def)
 end
 
 function FunctionizeClosure(closure)

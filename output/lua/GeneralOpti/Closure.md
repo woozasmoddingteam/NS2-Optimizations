@@ -187,3 +187,9 @@ local closure = Closure "args x y; return x * y / self.var" {var = 2}
 local func = FunctionizeClosure(closure)
 assert(type(closure) == "function")
 ```
+
+##The Weird SClosure type
+
+The S in SClosure means static.
+These are not designed to have a speedy generation, but to instead avoid duplicate functions with the same `self` arguments.
+This helps with caching traces.
