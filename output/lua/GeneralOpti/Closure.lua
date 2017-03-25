@@ -196,7 +196,7 @@ local function newLambda(def)
 	local old_def = def
 	local self, args, def = parseArguments(def)
 
-	assert(#self == 0, "Can not supply self arguments in a lambda! Use a CLambda instead.")
+	assert(#self == 0, "Can not supply self arguments in a Lambda! Use a CLambda instead.")
 
 	local total = "return function(" .. fargs(args, true) .. ") return " .. def .. " end"
 	print(total)

@@ -1,59 +1,82 @@
 
 local table_new = require "table.new"
+local table_clear = require "table.clear"
 local max = math.max
 local abs = math.abs
 local origin = Vector.origin
-local function allocate(n)
-	return table_new(n+1, 0)
+local type = type
+local Shared_GetTime = Shared.GetTime
+
+local function diffunder(limit, v1, v2)
+	return max(abs(v1.x - v2.x), abs(v1.y - v2.y), abs(v1.z, v2.z)) < limit
 end
 
 local kCacheSize = 20
+local kCacheElements = 8
+local keyStartPoint   = 0
+local keyStopPoint    = 1
+local keyCollisionRep = 2
+local keyPhysicsMask  = 3
+local keyFilter       = 4
+local keyTrace        = 5
 local kAcceptance = Vector(0.1, 0.1, 0.1)
 
-local cache = allocate(kCacheSize)
-local prev_time = 0;
+local cache = table_new(kCacheSize*kCacheElements, 0)
+local prev_time
+local last = 0
 
-local function clear()
-	prev_time = Shared.GetTime()
-	cache = allocate(kCacheSize*4)
-	cache[0] = 1 -- The zeroeth index points to the oldest value
-	for i = 1, #kCacheSize*4, 4 do
-		cache[i]   = Vector.origin -- startPoint
-		cache[i+1] = Vector.origin -- endPoint
-		cache[i+2] = 0             -- collisionRep
-	end
+local function set(i, start, stop, collisionRep, physicsMask, filter, trace)
+	cache[i+keyStartPoint]   = start
+	cache[i+keyStopPoint]    = stop
+	cache[i+keyCollisionRep] = collisionRep
+	cache[i+keyPhysicsMask]  = physicsMask
+	cache[i+keyFilter]       = filter
+	cache[i+keyTrace]        = trace
 end
 
-local function diffover(limit, v1, v2)
-	return max(abs(v1.x - v2.x), abs(v1.y - v2.y), abs(v1.z, v2.z)) > limit
+local function clear()
+	prev_time = Shared_GetTime()
+	table_clear(cache)
+	local i = 0
+	while i < kCacheSize * kCacheElements do
+		set(i, origin, origin, 0, 0xFFFFFFFF)
+		i = i + kCacheElements
+	end
 end
 
 local old = Shared.TraceRay
 
-function BetterTraceRay(start, stop, arg3, arg4, arg5)
-	if arg4 then -- Unsupported
-		if arg5 then
-			return old(start, stop, arg3, arg4, arg5)
-		else
-			return old(start, stop, arg3, arg4)
+function BetterTraceRay(start, stop, collisionRep, physicsMask, filter)
+	if type(physicsMask) ~= "number" then -- Unsupported
+		filter = physicsMask
+		physicsMask = 0xFFFFFFFF
+	end
+
+	if Shared_GetTime() ~= prev_time then
+		table_clear(cache)
+	else
+		while i < kCacheSize*kCacheElements do
+			if
+			  collisionRep == cache[i+keyCollisionRep]   and
+			  physicsMask  == cache[i+keyPhysicsMask]    and
+			  filter       == cache[i+keyFilter]         and
+			  diffunder(kAcceptance, start, cache[i+keyStartPoint]) and
+			  diffunder(kAcceptance, stop, cache[i+keyStopPoint])
+			  then
+				return cache[i+keyTrace]
+			end
+			i = i + kCacheElements
 		end
 	end
 
-	for i = 1, #kCacheSize*4, 4 do
-		local startdiff = start-cache[i]
-		if
-		  arg3 == cache[i+2]
-		  and not diffover(kAcceptance, start, cache[i])
-		  and not diffover(kAcceptance, stop, cache[i+1])
-		  then
-			return cache[i+3]
-		end
+	local trace
+	if filter then
+		trace = old(start, stop, collisionRep, physicsMask, filter)
+	else
+		trace = old(start, stop, collisionRep, physicsMask)
 	end
-	local trace = old(start, stop, arg3)
-	local new = cache[0]
-	cache[new]   = start
-	cache[new+1] = stop
-	cache[new+2] = arg3
-	cache[new+3] = trace
+
+	set(last, start, stop, collisionRep, physicsMask, filter, trace)
+	last = (last + 1) % kCacheSize
 	return trace
 end
