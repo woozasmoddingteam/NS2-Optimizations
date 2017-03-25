@@ -1,4 +1,5 @@
 local print = Shared and Shared.Message or print
+local select       = select
 local setmetatable = setmetatable
 local byte = string.byte
 local sub  = string.sub
@@ -91,7 +92,7 @@ local function parseArguments(def)
 				index = trimLeadingWhite(def, index)
 
 				if delimits(byte(def, index)) then
-					goto self
+					goto loop
 				end
 
 				local start = index
@@ -200,9 +201,9 @@ local function newSClosure(def, cache, is_lambda)
 
 	local funcs = weakTable {}
 
-	local function newSClosureInst(self)
+	local function newSClosureInst(self, len)
 		local t = funcs
-		for i = 1, #self do
+		for i = 1, len do
 			local v = self[i]
 			if not t[v] then
 				t[v] = weakTable {}
@@ -216,12 +217,14 @@ local function newSClosure(def, cache, is_lambda)
 		return inst
 	end
 
-	local generator = function(self)
+	local generator = function(...)
+		local self = {...}
+		local len = select('#', ...)
 		local t = funcs
-		for i = 1, #self do
+		for i = 1, len do
 			local v = self[i]
 			if not t[v] then
-				return newSClosureInst(self)
+				return newSClosureInst(self, len)
 			end
 			t = t[v]
 		end
@@ -237,7 +240,7 @@ function Closure(def)
 end
 
 function CLambda(def)
-	return closures[def] or newClosure(def, clambdas, true)
+	return clambdas[def] or newClosure(def, clambdas, true)
 end
 
 function Lambda(def)
@@ -249,7 +252,7 @@ function SClosure(def)
 end
 
 function SLambda(def)
-	return sclosures[def] or newSClosure(def, slambdas, true)
+	return slambdas[def] or newSClosure(def, slambdas, true)
 end
 
 function FunctionizeClosure(closure)

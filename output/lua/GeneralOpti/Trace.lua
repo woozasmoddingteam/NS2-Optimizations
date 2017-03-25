@@ -1,6 +1,5 @@
 
 local table_new = require "table.new"
-local table_clear = require "table.clear"
 local max = math.max
 local abs = math.abs
 local origin = Vector.origin
@@ -36,7 +35,6 @@ end
 
 local function clear()
 	prev_time = Shared_GetTime()
-	table_clear(cache)
 	local i = 0
 	while i < kCacheSize * kCacheElements do
 		set(i, origin, origin, 0, 0xFFFFFFFF)
@@ -55,6 +53,7 @@ function BetterTraceRay(start, stop, collisionRep, physicsMask, filter)
 	if Shared_GetTime() ~= prev_time then
 		table_clear(cache)
 	else
+		local i = 0
 		while i < kCacheSize*kCacheElements do
 			if
 			  collisionRep == cache[i+keyCollisionRep]   and
@@ -80,3 +79,6 @@ function BetterTraceRay(start, stop, collisionRep, physicsMask, filter)
 	last = (last + 1) % kCacheSize
 	return trace
 end
+
+clear()
+Log("\n\nType: %s\n\n", type(Shared))
