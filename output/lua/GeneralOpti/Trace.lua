@@ -81,4 +81,3 @@ function BetterTraceRay(start, stop, collisionRep, physicsMask, filter)
 end
 
 clear()
-Log("\n\nType: %s\n\n", type(Shared))

@@ -46,6 +46,11 @@ local function trimLeadingWhite(str, index)
 	return index
 end
 
+local function isSub(a, idx, b)
+	local v = sub(a, idx, idx+#b-1) == b
+	return v
+end
+
 local function parseArguments(def)
 	local self = {}
 	local args = {}
@@ -55,14 +60,15 @@ local function parseArguments(def)
 	::loop:: do
 		index = trimLeading(def, index)
 
-		if sub(def, index, index+4) == "self " or sub(def, index, index+4) == "self\t" then
-			index = index + 5
+		if isSub(def, index, "self") and (isWhite(byte(def, index+4)) or delimits(byte(def, index+4))) then
+			index = index + 4
 			while true do
 
 				index = trimLeadingWhite(def, index)
 
 				if delimits(byte(def, index)) then
-					goto args
+					print("WARNING! Empty `self` argument declaration!")
+					goto loop
 				end
 
 				local start = index
@@ -70,7 +76,7 @@ local function parseArguments(def)
 				while not isWhite(byte(def, index)) do
 					if delimits(byte(def, index)) then
 						table.insert(self, sub(def, start, index-1))
-						goto args
+						goto loop
 					end
 					index = index + 1
 				end
@@ -78,20 +84,14 @@ local function parseArguments(def)
 				table.insert(self, sub(def, start, index-1))
 
 			end
-		else
-			goto ret
-		end
-
-		::args::
-		index = trimLeading(def, index)
-
-		if sub(def, index, index+4) == "args " or sub(def, index, index+4) == "args\t" then
-			index = index + 5
+		elseif isSub(def, index, "args") and (isWhite(byte(def, index+4)) or delimits(byte(def, index+4))) then
+			index = index + 4
 			while true do
 
 				index = trimLeadingWhite(def, index)
 
 				if delimits(byte(def, index)) then
+					print("WARNING! Empty `args` argument declaration!")
 					goto loop
 				end
 
@@ -108,23 +108,18 @@ local function parseArguments(def)
 				table.insert(args, def:sub(start, index-1))
 
 			end
-		else
-			goto ret
 		end
-
-		goto loop
 	end
 
-	::ret::
 	index = byte(def, index) == semicolon and index + 1 or index
 	return self, args, sub(def, index)
 end
 
 local function fargs(t, b)
 	if #t > 0 then
-		return (not b and "," or "") .. table.concat(t, ',')
+		return (not b and ", " or "") .. table.concat(t, ',')
 	else
-		return (not b and "," or "") .. "..."
+		return (not b and ", " or "") .. "..."
 	end
 end
 
@@ -146,7 +141,7 @@ local function newClosure(def, cache, is_lambda)
 
 	local name = is_lambda and "CLambda" or "Closure"
 
-	local total = "return function(self " .. fargs(args) .. ") " .. sargs(self) .. (is_lambda and "return " or "") .. def .. " end"
+	local total = "return function(self" .. fargs(args) .. ") " .. sargs(self) .. (is_lambda and "return " or "") .. def .. " end"
 	print(total)
 	local f, msg = loadstring(total, name)
 	if not f then
@@ -190,7 +185,7 @@ local function newSClosure(def, cache, is_lambda)
 
 	local name = is_lambda and "SLambda" or "SClosure"
 
-	local total = "return function(self " .. fargs(args) .. ") " .. sargs(self) .. (is_lambda and "return " or "") .. def .. " end"
+	local total = "return function(self" .. fargs(args) .. ") " .. sargs(self) .. (is_lambda and "return " or "") .. def .. " end"
 	print(total)
 	local f, msg = loadstring(total, name)
 	if not f then
