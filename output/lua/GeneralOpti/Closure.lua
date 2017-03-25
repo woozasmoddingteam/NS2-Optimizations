@@ -17,7 +17,7 @@ local tab       = string.byte('\t')
 local semicolon = string.byte(';')
 
 local weak_meta = {
-	__mode = "kv"
+	__mode = "k"
 }
 local function weakTable(arg)
 	return setmetatable(arg, weak_meta)
