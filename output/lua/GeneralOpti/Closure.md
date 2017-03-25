@@ -188,14 +188,14 @@ local func = FunctionizeClosure(closure)
 assert(type(closure) == "function")
 ```
 
-##The Weird SClosure type
+##The Weird SClosure and SLambda type
 
 The S in SClosure means static.
 These are not designed to have a speedy generation, but to instead avoid duplicate functions with the same `self` arguments.
 This helps with caching traces.
 
 ###NB
-They only support **1** self-argument, and it's enclosed in parentheses ('()'), not braces ('{}').
+They do not support non-integer `self` fields.
+This means passing {a = 2} will not work, but `self a` will still work perfectly.
 They will also compile a new function for each different argument pair passed.
 This makes it unsuitable for use with table literals.
-They also don't support the `self` syntax sugar.

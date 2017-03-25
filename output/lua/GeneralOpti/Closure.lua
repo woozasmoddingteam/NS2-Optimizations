@@ -1,15 +1,26 @@
 local print = Shared and Shared.Message or print
+local setmetatable = setmetatable
+local byte = string.byte
+local sub  = string.sub
 
-local closures = {}
-local clambdas = {}
-local lambdas  = {}
+local closures  = {}
+local clambdas  = {}
+local lambdas   = {}
 local sclosures = {}
+local slambdas  = {}
 
 -- Other types of whitespace not supported!
 local space     = string.byte(' ')
 local newline   = string.byte('\n')
 local tab       = string.byte('\t')
 local semicolon = string.byte(';')
+
+local weak_meta = {
+	__mode = "kv"
+}
+local function weakTable(arg)
+	return setmetatable(arg, weak_meta)
+end
 
 local function isWhite(c)
 	return c == space
@@ -20,114 +31,92 @@ local function delimits(c)
 	return not c or c == newline or c == semicolon
 end
 
+local function trimLeading(str, index)
+	while (isWhite(byte(str, index)) or delimits(byte(str, index))) and index <= #str do
+		index = index + 1
+	end
+	return index
+end
+
+local function trimLeadingWhite(str, index)
+	while isWhite(byte(str, index)) do
+		index = index + 1
+	end
+	return index
+end
+
 local function parseArguments(def)
 	local self = {}
 	local args = {}
 
 	local index = 1
 
-	while (isWhite(def:byte(index)) or delimits(def:byte(index))) and index <= #def do
-		index = index + 1
-	end
+	::loop:: do
+		index = trimLeading(def, index)
 
-	if def:sub(index, index+4) == "self " then
-		index = index + 5
-		::loop:: do
+		if sub(def, index, index+4) == "self " or sub(def, index, index+4) == "self\t" then
+			index = index + 5
+			while true do
 
-			while isWhite(def:byte(index)) do
-				index = index + 1
-			end
+				index = trimLeadingWhite(def, index)
 
-			if delimits(def:byte(index)) then
-				goto args
-			end
-
-			local start = index
-
-			while not isWhite(def:byte(index)) do
-				if delimits(def:byte(index)) then
-					table.insert(self, def:sub(start, index-1))
+				if delimits(byte(def, index)) then
 					goto args
 				end
-				index = index + 1
+
+				local start = index
+
+				while not isWhite(byte(def, index)) do
+					if delimits(byte(def, index)) then
+						table.insert(self, sub(def, start, index-1))
+						goto args
+					end
+					index = index + 1
+				end
+
+				table.insert(self, sub(def, start, index-1))
+
 			end
-
-			table.insert(self, def:sub(start, index-1))
-
+		else
+			goto ret
 		end
-		goto loop
-	end
 
-	::args::
-	while (isWhite(def:byte(index)) or delimits(def:byte(index))) and index <= #def do
-		index = index + 1
-	end
+		::args::
+		index = trimLeading(def, index)
 
-	if def:sub(index, index+4) == "args " then
-		index = index + 5
-		::loop:: do
+		if sub(def, index, index+4) == "args " or sub(def, index, index+4) == "args\t" then
+			index = index + 5
+			while true do
 
-			while isWhite(def:byte(index)) do
-				index = index + 1
-			end
+				index = trimLeadingWhite(def, index)
 
-			if delimits(def:byte(index)) then
-				goto self
-			end
-
-			local start = index
-
-			while not isWhite(def:byte(index)) do
-				if delimits(def:byte(index)) then
-					table.insert(args, def:sub(start, index-1))
+				if delimits(byte(def, index)) then
 					goto self
 				end
-				index = index + 1
-			end
 
-			table.insert(args, def:sub(start, index-1))
+				local start = index
 
-		end
-		goto loop
-	end
-
-	::self::
-
-	while (isWhite(def:byte(index)) or delimits(def:byte(index))) and index <= #def do
-		index = index + 1
-	end
-
-	if def:sub(index, index+4) == "self " then
-		index = index + 5
-		::loop:: do
-
-			while isWhite(def:byte(index)) do
-				index = index + 1
-			end
-
-			if delimits(def:byte(index)) then
-				goto ret
-			end
-
-			local start = index
-
-			while not isWhite(def:byte(index)) do
-				if delimits(def:byte(index)) then
-					table.insert(self, def:sub(start, index-1))
-					goto ret
+				while not isWhite(byte(def, index)) do
+					if delimits(byte(def, index)) then
+						table.insert(args, def:sub(start, index-1))
+						goto loop
+					end
+					index = index + 1
 				end
-				index = index + 1
+
+				table.insert(args, def:sub(start, index-1))
+
 			end
-
-			table.insert(self, def:sub(start, index-1))
-
+		else
+			goto ret
 		end
+
 		goto loop
 	end
 
 	::ret::
-	index = def:byte(index) == semicolon and index + 1 or index
-	return self, args, def:sub(index)
+	index = byte(def, index) == semicolon and index + 1 or index
+	return self, args, sub(def, index)
 end
 
 local function fargs(t, b)
@@ -150,15 +139,17 @@ local function sargs(t)
 	return s
 end
 
-local function newClosure(def)
+local function newClosure(def, cache, is_lambda)
 	local old_def = def
 	local self, args, def = parseArguments(def)
 
-	local total = "return function(self " .. fargs(args) .. ") " .. sargs(self) .. def .. " end"
+	local name = is_lambda and "CLambda" or "Closure"
+
+	local total = "return function(self " .. fargs(args) .. ") " .. sargs(self) .. (is_lambda and "return " or "") .. def .. " end"
 	print(total)
-	local f, msg = loadstring(total, "Closure")
+	local f, msg = loadstring(total, name)
 	if not f then
-		assert(nil, "Error constructing Closure: `" .. total .. "`! Reason: " .. msg)
+		assert(nil, "Error constructing " .. name .. ": `" .. total .. "`! Reason: " .. msg)
 		return
 	end
 	f = f()
@@ -167,28 +158,7 @@ local function newClosure(def)
 	local generator = function(args)
 		return setmetatable(args, meta)
 	end
-	closures[old_def] = generator
-	return generator
-end
-
-local function newCLambda(def)
-	local old_def = def
-	local self, args, def = parseArguments(def)
-
-	local total = "return function(self " .. fargs(args) .. ") " .. sargs(self) .. "return " .. def .. " end"
-	print(total)
-	local f, msg = loadstring(total, "CLambda")
-	if not f then
-		assert(nil, "Error constructing CLambda: `" .. total .. "`! Reason: " .. msg)
-		return
-	end
-	f = f()
-
-	local meta = {__call = f}
-	local generator = function(args)
-		return setmetatable(args, meta)
-	end
-	clambdas[old_def] = generator
+	cache[old_def] = generator
 	return generator
 end
 
@@ -211,46 +181,63 @@ local function newLambda(def)
 	return f
 end
 
-local function newSClosure(def)
+local keySClosureFunc = newproxy()
+
+local function newSClosure(def, cache, is_lambda)
 	local old_def = def
 	local self, args, def = parseArguments(def)
 
-	assert(#self == 0, "Can not supply self arguments in a SClosure! I don't really know what you tried to do.")
+	local name = is_lambda and "SLambda" or "SClosure"
 
-	local total = "return function(self " .. fargs(args) .. ") " .. sargs(self) .. def .. " end"
+	local total = "return function(self " .. fargs(args) .. ") " .. sargs(self) .. (is_lambda and "return " or "") .. def .. " end"
 	print(total)
-	local f, msg = loadstring(total, "SClosure")
+	local f, msg = loadstring(total, name)
 	if not f then
-		assert(nil, "Error constructing SClosure: `" .. total .. "`! Reason: " .. msg)
+		assert(nil, "Error constructing " .. name .. ": `" .. total .. "`! Reason: " .. msg)
 		return
 	end
 	f = f()
 
-	local funcs = setmetatable({}, {
-		__mode = "kv" -- Weak
-	})
+	local funcs = weakTable {}
 
 	local function newSClosureInst(self)
+		local t = funcs
+		for i = 1, #self do
+			local v = self[i]
+			if not t[v] then
+				t[v] = weakTable {}
+			end
+			t = t[v]
+		end
 		local inst = function(...)
 			return f(self, ...)
 		end
-		funcs[self] = inst
+		t[keySClosureFunc] = inst
 		return inst
 	end
 
 	local generator = function(self)
-		return funcs[self] or newSClosureInst(self)
+		local t = funcs
+		for i = 1, #self do
+			local v = self[i]
+			if not t[v] then
+				return newSClosureInst(self)
+			end
+			t = t[v]
+		end
+		return t[keySClosureFunc] or newSClosureInst(self)
 	end
-	sclosures[old_def] = generator
+
+	cache[old_def] = generator
 	return generator
 end
 
 function Closure(def)
-	return closures[def] or newClosure(def)
+	return closures[def] or newClosure(def, closures)
 end
 
 function CLambda(def)
-	return clambdas[def] or newCLambda(def)
+	return closures[def] or newClosure(def, clambdas, true)
 end
 
 function Lambda(def)
@@ -258,7 +245,11 @@ function Lambda(def)
 end
 
 function SClosure(def)
-	return sclosures[def] or newSClosure(def)
+	return sclosures[def] or newSClosure(def, sclosures)
+end
+
+function SLambda(def)
+	return sclosures[def] or newSClosure(def, slambdas, true)
 end
 
 function FunctionizeClosure(closure)
