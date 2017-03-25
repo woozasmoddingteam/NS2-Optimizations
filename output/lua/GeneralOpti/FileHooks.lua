@@ -11,7 +11,6 @@ They indicate badly written code, and help debugging.
 ModLoader.SetupFileHook("lua/Table.lua", "lua/GeneralOpti/Table.lua", "post")
 ModLoader.SetupFileHook("lua/Entity.lua", "lua/GeneralOpti/Entity.lua", "post")
 ModLoader.SetupFileHook("lua/Player.lua", "lua/GeneralOpti/Player.lua", "post")
-ModLoader.SetupFileHook("lua/Utility.lua", "lua/GeneralOpti/Utility.lua", "post")
 
 Script.Load("lua/GeneralOpti/Trace.lua")
 
@@ -25,17 +24,17 @@ if Server then
 			player:GetViewCoords().zAxis * 100 + player:GetEyePos(),
 			CollisionRep.Default,
 			function(ent) end
-		local time1 = clock()
-		for i = 1, 2^15 do
+		local t1 = clock()
+		for i = 1, 2^16 do
 			local trace = Shared.TraceRay(arg1, arg2, arg3, arg4)
 		end
-		local time2 = clock()
-		for i = 1, 2^15 do
-			local trace = Shared.TraceRay(arg1, arg2, arg3)
+		local t2 = clock()
+		for i = 1, 2^16 do
+			local trace = BetterTraceRay(arg1, arg2, arg3, arg4)
 		end
-		local time3 = clock()
-		Log("Total: %s", time2-time1)
-		Log("Better: %s", time3-time2)
+		local t3 = clock()
+		Log("Ordinary: %s", t2-t1)
+		Log("Caching:  %s", t3-t2)
 	end
-	Event.Hook("Console_testents", Test)
+	Event.Hook("Console_testray", Test)
 end
