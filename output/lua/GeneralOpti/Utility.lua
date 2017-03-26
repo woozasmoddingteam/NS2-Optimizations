@@ -1,5 +1,11 @@
+assert(EntityFilterOne)
+
 function EntityFilterOne(entity)
-	return SLambda [[ self ent; ... == ent ]] (entity)
+	if entity == nil then
+		return Lambda  [[false]]
+	else
+		return SLambda [[ self ent; ... == ent ]] (entity)
+	end
 end
 
 function EntityFilterOneAndIsa(entity, classname)
@@ -19,7 +25,7 @@ function EntityFilterOnly(entity)
 end
 
 function EntityFilterAll()
-	return Lambda [[ ... ~= nil ]]
+	return Lambda [[true]]
 end
 
 function EntityFilterAllButIsa(classname)
@@ -36,4 +42,27 @@ end
 
 function EntityFilterMixin(mixinType)
 	return SLambda [[self mixin; HasMixin(..., mixin)]] (mixinType)
+end
+
+function Copy(t)
+
+    if type(t) == "table" then
+		return table.iduplicate(t)
+    elseif type(t) == "cdata" then
+        if t:isa("Vector") then
+            return Vector(t)
+        elseif t:isa("Angles") then
+            return Angles(t)
+        elseif t:isa("Coords") then
+            return Coords(t)
+        elseif t:isa("Trace") then
+            return Trace(t)
+        else
+            --Print("Copy(%s): Not implemented.", t:GetClassName())
+            return t
+        end
+	else
+		return t
+    end
+
 end

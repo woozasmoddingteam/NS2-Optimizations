@@ -178,6 +178,7 @@ local function newLambda(def)
 end
 
 local keySClosureFunc = newproxy()
+local keyNil          = newproxy()
 
 local function newSClosure(def, cache, is_lambda)
 	local old_def = def
@@ -200,6 +201,9 @@ local function newSClosure(def, cache, is_lambda)
 		local t = funcs
 		for i = 1, len do
 			local v = self[i]
+			if v == nil then
+				v = keyNil
+			end
 			if not t[v] then
 				t[v] = weakTable {}
 			end
@@ -218,6 +222,9 @@ local function newSClosure(def, cache, is_lambda)
 		local t = funcs
 		for i = 1, len do
 			local v = self[i]
+			if v == nil then
+				v = keyNil
+			end
 			if not t[v] then
 				return newSClosureInst(self, len)
 			end

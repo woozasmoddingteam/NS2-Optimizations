@@ -1,14 +1,49 @@
 
-// This way LuaJIT can inline only the fast paths, instead of nothing at all
-
 local type = type
 local table_insert = table.insert
 local table_sort = table.sort
+local table_remove = table.remove
 local random = math.random
 local max = math.max
 local floor = math.floor
 local ceil = math.ceil
+local print = Shared.Message or print
 local elementEqualsElement
+
+local original_table_clear = require("table.clear")
+
+function table.clear(t)
+
+	if t then
+		original_table_clear(t)
+	end
+
+end
+
+local table_clear = table.clear
+
+table.new = require "table.new"
+
+local table_new = table.new
+
+function table.array(size)
+    return table_new(size+1, 0)
+end
+
+function table.dictionary(slots)
+	return table_new(0, slots)
+end
+
+local function isArray(t)
+	return #t > 0
+end
+
+local function isDictionary(t)
+	for k in pairs(t) do
+		return true
+	end
+	return false
+end
 
 local function deep(x, y)
 	if #x == #y then
@@ -26,6 +61,20 @@ elementEqualsElement = function(x, y)
 end
 
 _G.elementEqualsElement = elementEqualsElement
+
+function table.copy(src, dst, no_clear)
+
+    if #dst > 0 and not no_clear then
+        original_table_clear(dst)
+    end
+
+	for i = 1, #src do
+		dst[i] = Copy(src[i])
+    end
+
+end
+
+local table_copy = table.copy
 
 function table.find(findTable, value)
 
@@ -62,6 +111,7 @@ function table.count(t, log)
 	elseif log then
         Shared.Message("table.count() - Nil table passed in, returning 0.")
 	end
+	return 0
 end
 
 function table.maxn(t)
@@ -117,6 +167,7 @@ local table_icontains = table.icontains
 function table.contains(t, v)
 
 	if #t > 0 then
+		assert(not isDictionary(t))
 		return table_icontains(t, v)
 	else
 		return table_dcontains(t, v)
@@ -133,24 +184,6 @@ end
 
 table.getIsEquivalent = deep
 
-local original_table_clear = require("table.clear")
-
-function table.clear(t)
-
-	if t then
-		original_table_clear(t)
-	end
-
-end
-
-table.new = require "table.new"
-
-local table_new = table.new
-
-function table.array(size)
-    return table_new(size+1, 0)
-end
-
 function table.foreachfunctor(t, functor)
 
 	if not t then return end
@@ -164,9 +197,12 @@ function table.foreachfunctor(t, functor)
 end
 
 
+function table.removeTable()
+	error "Disabled"
+
 -- Returns a table full of elements that aren't found in both tables
 function table.diff()
-	assert(false, "Disabled!")
+	error "Disabled!"
 end
 
 -- Returns the numeric median of the given array of numbers
@@ -206,6 +242,7 @@ function table.mean( t )
 end
 
 function table.dmode(t)
+	assert(false, "Disabled!")
 	local counts = {}
 	local keys = {}
 
@@ -273,8 +310,66 @@ local table_imode = table.imode
 -- Get the mode of a table. Returns a table of values.
 function table.mode(t)
 	if #t > 0 then
+		assert(not isDictionary(t))
 		return table_imode(t)
 	else
 		return table_dmode(t)
 	end
+end
+
+function table.iduplicate(t)
+	local t2 = table_new(#t+1, 0)
+	for i = 1, #t do
+		t2[i] = t[i]
+	end
+	return t2
+end
+
+local table_iduplicate = table.iduplicate
+
+function table.dduplicate(t)
+	local t2 = {}
+	for k, v in pairs(t) do
+		t2[k] = v
+	end
+	return t2
+end
+
+local table_dduplicate = table.dduplicate
+
+function table.duplicate(t)
+	if #t > 0 then
+		assert(not isDictionary(t))
+		return table_iduplicate(t)
+	else
+		return table_dduplicate(t)
+	end
+end
+
+function table.removeConditional(t, filter)
+
+    if t ~= nil then
+
+		local len = #t
+		local i = 1
+		while i <= len do
+
+            local e
+
+			::loop:: do
+				e = t[i]
+
+				if e ~= nil and filter(e) then
+					table_remove(t, i)
+					len = len - 1
+					goto loop
+				end
+			end
+
+            i = i + 1
+
+        end
+
+    end
+
 end
