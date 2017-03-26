@@ -1,5 +1,3 @@
-do return end
-
 modEntry = {
          FileHooks = "lua/BeaconOpti/BO_FileHooks.lua",
          Priority = 6

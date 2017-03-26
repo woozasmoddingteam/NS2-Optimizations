@@ -66,12 +66,13 @@ _G.elementEqualsElement = elementEqualsElement
 
 function table.copy(src, dst, no_clear)
 
-    if #dst > 0 and not no_clear then
+	local len = #dst
+    if len > 0 and not no_clear then
         original_table_clear(dst)
     end
 
 	for i = 1, #src do
-		dst[i] = Copy(src[i])
+		dst[len+i] = Copy(src[i])
     end
 
 end
@@ -169,7 +170,6 @@ local table_icontains = table.icontains
 function table.contains(t, v)
 
 	if #t > 0 then
-		assert(not isDictionary(t))
 		return table_icontains(t, v)
 	else
 		return table_dcontains(t, v)
@@ -197,7 +197,6 @@ function table.foreachfunctor(t, functor)
     end
 
 end
-
 
 function table.removeTable()
 	error "Disabled"
@@ -245,7 +244,7 @@ function table.mean( t )
 end
 
 function table.dmode(t)
-	assert(false, "Disabled!")
+	error "Disabled!"
 	local counts = {}
 	local keys = {}
 
@@ -313,7 +312,6 @@ local table_imode = table.imode
 -- Get the mode of a table. Returns a table of values.
 function table.mode(t)
 	if #t > 0 then
-		assert(not isDictionary(t))
 		return table_imode(t)
 	else
 		return table_dmode(t)
@@ -342,7 +340,6 @@ local table_dduplicate = table.dduplicate
 
 function table.duplicate(t)
 	if #t > 0 then
-		assert(not isDictionary(t))
 		return table_iduplicate(t)
 	else
 		return table_dduplicate(t)

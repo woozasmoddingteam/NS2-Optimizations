@@ -28,7 +28,6 @@ debug.callstack = function(level)
 	end
 	return str;
 end
-do return end
 
 modEntry = {
 	FileHooks = "lua/FastMixin/FileHooks.lua",
