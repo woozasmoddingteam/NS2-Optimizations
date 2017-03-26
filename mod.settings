@@ -1,7 +1,0 @@
-name        = "NS2 Optimizations - Experimental"
-source_dir  = "source"
-output_dir  = "output"
-description = [=[]=]
-image       = "preview.jpg"
-tag_modtype = ""
-tag_support = "Must be run on Server"
