@@ -12,5 +12,7 @@ ModLoader.SetupFileHook("lua/Table.lua", "lua/GeneralOpti/Table.lua", "post")
 ModLoader.SetupFileHook("lua/Entity.lua", "lua/GeneralOpti/Entity.lua", "post")
 ModLoader.SetupFileHook("lua/Player.lua", "lua/GeneralOpti/Player.lua", "post")
 
-Script.Load("lua/GeneralOpti/Trace.lua")
+if Shared then
+	Script.Load("lua/GeneralOpti/Trace.lua")
+end
 Script.Load("lua/GeneralOpti/Utility.lua")

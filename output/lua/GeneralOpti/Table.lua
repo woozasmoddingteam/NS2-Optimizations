@@ -40,7 +40,9 @@ end
 
 local function isDictionary(t)
 	for k in pairs(t) do
-		return true
+		if type(k) ~= "number" then
+			return true
+		end
 	end
 	return false
 end
@@ -199,6 +201,7 @@ end
 
 function table.removeTable()
 	error "Disabled"
+end
 
 -- Returns a table full of elements that aren't found in both tables
 function table.diff()
