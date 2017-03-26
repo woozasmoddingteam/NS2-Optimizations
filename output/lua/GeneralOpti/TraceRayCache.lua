@@ -75,7 +75,7 @@ local caching_enabled = true
 function Shared.TraceRay(start, stop, collisionRep, physicsMask, filter)
 	if type(physicsMask) ~= "number" then
 		filter = physicsMask
-		physicsMask = 0
+		physicsMask = 0xFFFFFFFF
 	end
 
 	if caching_enabled then

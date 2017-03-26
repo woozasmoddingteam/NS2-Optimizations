@@ -81,7 +81,7 @@ local caching_enabled = true
 log = false and Log or Lambda ""
 
 function Shared.TraceCapsule(start, stop, radius, height, collisionRep, physicsMask, filter)
-	physicsMask = physicsMask or 0
+	physicsMask = physicsMask or 0xFFFFFFFF
 
 	if caching_enabled then
 		if Shared_GetTime() ~= prev_time then
