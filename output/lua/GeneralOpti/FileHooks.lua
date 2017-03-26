@@ -15,6 +15,7 @@ ModLoader.SetupFileHook("lua/Player.lua", "lua/GeneralOpti/Player.lua", "post")
 if Shared then
 	Script.Load("lua/GeneralOpti/TraceRayCache.lua")
 	Script.Load("lua/GeneralOpti/TraceCapsuleCache.lua")
+	Script.Load("lua/GeneralOpti/TraceBoxCache.lua")
 end
 
 Script.Load("lua/GeneralOpti/Utility.lua")
