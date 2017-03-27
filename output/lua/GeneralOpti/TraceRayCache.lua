@@ -40,7 +40,7 @@ local prev_time
 local last = 0
 
 local function set(i, start, stop, collisionRep, physicsMask, filter, trace)
-	---[=[
+	--[=[
 	assert(start:isa "Vector")
 	assert(stop:isa "Vector")
 	assert(type(collisionRep) == "number")
