@@ -68,7 +68,7 @@ if (Server) then
    end
 
    --------------------
-   local disable_smoothing = true
+   local disable_smoothing = false
 
    local spawn_iterator = 1
    local ObservatoryTriggerDistressBeacon = Observatory.TriggerDistressBeacon
