@@ -13,7 +13,7 @@ local Vector = Vector
 local diff = CacheUtility.VectorDiff
 local near = CacheUtility.ScalarNear
 
-local kCacheSize        = 64
+local kCacheSize        = Server and 64 or 16
 local kCacheElements    = 8
 local keyStart          = 0
 local keyStop           = 1
