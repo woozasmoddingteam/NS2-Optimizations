@@ -8,7 +8,7 @@ They indicate badly written code, and help debugging.
 ------------------------------
 ]=]
 
---[=[
+---[=[
 ModLoader.SetupFileHook("lua/Table.lua", "lua/GeneralOpti/Table.lua", "post")
 ModLoader.SetupFileHook("lua/Entity.lua", "lua/GeneralOpti/Entity.lua", "post")
 ModLoader.SetupFileHook("lua/Player.lua", "lua/GeneralOpti/Player.lua", "post")
