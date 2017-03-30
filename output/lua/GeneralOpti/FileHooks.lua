@@ -8,12 +8,40 @@ They indicate badly written code, and help debugging.
 ------------------------------
 ]=]
 
----[=[
-ModLoader.SetupFileHook("lua/Table.lua", "lua/GeneralOpti/Table.lua", "post")
-ModLoader.SetupFileHook("lua/Entity.lua", "lua/GeneralOpti/Entity.lua", "post")
-ModLoader.SetupFileHook("lua/Player.lua", "lua/GeneralOpti/Player.lua", "post")
+local default_config = Server and {
+	TraceCaching = true,
+	TraceCacheSize = {
+		Ray     = 64,
+		Box     = 32,
+		Capsule = 32
+	},
+	InfinitePlayerRelevancy = false,
+	TableOptimisations = false,
+	FastMixin = true
+} or {
+	TraceCaching = true,
+	TraceCacheSize = {
+		Ray     = 16,
+		Box     = 8,
+		Capsule = 8,
+	}
+	TableOptimisations = false,
+	FastMixin = true
+}
 
-if Shared then
+local config = LoadConfigFile(Server and "NS2OptiServer.json" or "NS2OptiClient", default_config)
+
+---[=[
+if config.TableOptimisations then
+	ModLoader.SetupFileHook("lua/Table.lua", "lua/GeneralOpti/Table.lua", "post")
+end
+ModLoader.SetupFileHook("lua/Entity.lua", "lua/GeneralOpti/Entity.lua", "post")
+if config.InfinitePlayerRelevancy then
+	ModLoader.SetupFileHook("lua/Player.lua", "lua/GeneralOpti/Player.lua", "post")
+end
+
+if Shared and config.TraceCaching then
+	kTraceCachingConfig = config.TraceCacheSize
 	Script.Load("lua/GeneralOpti/TraceRayCache.lua")
 	Script.Load("lua/GeneralOpti/TraceCapsuleCache.lua")
 	Script.Load("lua/GeneralOpti/TraceBoxCache.lua")

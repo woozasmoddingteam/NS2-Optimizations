@@ -11,7 +11,7 @@ local Vector = Vector
 
 local diff = CacheUtility.VectorDiff
 
-local kCacheSize      = Server and 64 or 16
+local kCacheSize      = kTraceCachingConfig.Ray
 local kCacheElements  = 8
 local keyStart        = 0
 local keyStop         = 1

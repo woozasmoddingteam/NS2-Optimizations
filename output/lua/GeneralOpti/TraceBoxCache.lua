@@ -13,7 +13,7 @@ local origin = Vector.origin
 local diff = CacheUtility.VectorDiff
 local near = CacheUtility.ScalarNear
 
-local kCacheSize        = Server and 64 or 16
+local kCacheSize        = kTraceCachingConfig.Box
 local kCacheElements    = 8
 local keyStart          = 0
 local keyStop           = 1
