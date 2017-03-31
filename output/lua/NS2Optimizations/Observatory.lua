@@ -158,8 +158,8 @@ function Observatory:TriggerDistressBeacon()
 	for i = 1, #constructs do
 		local construct = constructs[i]
 
-		ent:AddTimedCallback(makeRelevant, delay)
-		ent:AddTimedCallback(makeIrrelevant, kDistressBeaconTime + 5)
+		construct:AddTimedCallback(makeRelevant, delay)
+		construct:AddTimedCallback(makeIrrelevant, kDistressBeaconTime + 5)
 		delay = delay + step
 	end
 
