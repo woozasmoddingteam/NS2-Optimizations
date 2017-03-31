@@ -1,8 +1,4 @@
-
 modEntry = {
-	-- We do this because otherwise it wouldn't get loaded after all classes are done being loaded.
-	Server = "lua/NS2Optimizations/Late.lua",
-	Predict = "lua/NS2Optimizations/Late.lua",
-	Client = "lua/NS2Optimizations/Late.lua",
+	Shared = "lua/NS2Optimizations/Shared.lua",
 	Priority = -1000
 }

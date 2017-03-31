@@ -30,6 +30,7 @@ debug.callstack = function(level)
 end
 
 local oldclass = class;
+assert(oldclass);
 
 local reg = debug.getregistry();
 local classes = reg.__CLASSES;
@@ -55,8 +56,6 @@ class = function(name)
 	meta.name = name;
 	meta.mixintypes = {};
 	meta.mixindata = {};
-	--meta.mixinarguments = {};
-	-- Used to restore the original functions and unapplying the mixins. Integer keys's values are keys that should be cleared.
 	meta.mixinbackup = {};
 	meta.mixins = {};
 	classes[#classes+1] = cls;
@@ -67,11 +66,10 @@ class = function(name)
 
 	return function(base)
 		meta.base = base;
-		if base == Entity then
+		if base.__is_ent or base == Entity then
 			cls.__is_ent = true;
 		end
 		oldbasesetter(base);
-		---[=[
 		local backup = getmetatable(base) and getmetatable(base).mixinbackup;
 		if backup then
 			for k, v in pairs(backup) do
@@ -85,8 +83,3 @@ class = function(name)
 		end
 	end
 end
-
-ModLoader.SetupFileHook("lua/MixinUtility.lua", "lua/NS2Optimizations/MixinUtility.lua", "replace");
-ModLoader.SetupFileHook("lua/MixinDispatcherBuilder.lua", true, "halt");
-ModLoader.SetupFileHook("lua/Mixins/BaseModelMixin.lua", "lua/NS2Optimizations/BaseModelMixin.lua", "post");
-ModLoader.SetupFileHook("lua/ScoringMixin.lua", "lua/NS2Optimizations/ScoringMixin.lua", "post");
