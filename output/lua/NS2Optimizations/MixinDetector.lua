@@ -1,96 +1,97 @@
-Script.Load("lua/MixinUtility.lua");
-local classes = debug.getregistry().__CLASSES;
+Script.Load("lua/MixinUtility.lua")
+local kUnsafe = kNS2OptiConfig.FastMIxin
+local classes = debug.getregistry().__CLASSES
 
 local metatable = {
 	__index = function(self, key)
 		if rawget(self, key) ~= nil then
-			return rawget(self, key);
+			return rawget(self, key)
 		else
-			return self.__class[key];
+			return self.__class[key]
 		end
 	end
 }
 
-local detected_classes = {};
+local detected_classes = {}
 
 function DetectMixins(cls)
 	if detected_classes[cls] then
 		Log("WARNING: Duplicated class definition of %s!", getmetatable(cls).name)
 		return
 	end
-	detected_classes[cls] = true;
-	local meta = getmetatable(cls);
+	detected_classes[cls] = true
+	local meta = getmetatable(cls)
 
-	cls.__class = cls;
+	cls.__class = cls
 
-	if not cls.OnCreate then
-		return;
+	if not kUnsafe or not cls.OnCreate then
+		return
 	else
-		local info = debug.getinfo(cls.OnCreate);
-		local args = "";
+		local info = debug.getinfo(cls.OnCreate)
+		local args = ""
 		if info.isvararg then
-			args = "...";
+			args = "..."
 		else
 			for i = 1, info.nparams-1 do
-				args = args .. ", arg" .. i;
+				args = args .. ", arg" .. i
 			end
 		end
 
 		local str = [[
-			local cls = ...;
-			local meta = getmetatable(cls);
-			local old = cls.OnCreate;
+			local cls = ...
+			local meta = getmetatable(cls)
+			local old = cls.OnCreate
 
 			return function(self%s)
 				if not self.__constructing then
-					self.__mixintypes = {};
-					self.__mixindata = setmetatable({}, {__index = meta.mixindata});
-					self.__constructing = true;
-					old(self%s);
-					self.__constructing = false;
+					self.__mixintypes = {}
+					self.__mixindata = setmetatable({}, {__index = meta.mixindata})
+					self.__constructing = true
+					old(self%s)
+					self.__constructing = false
 				else
-					old(self%s);
+					old(self%s)
 				end
 			end
-		]];
+		]]
 
-		str = str:format(args, args, args);
-		cls.OnCreate = assert(loadstring(str))(cls);
+		str = str:format(args, args, args)
+		cls.OnCreate = assert(loadstring(str))(cls)
 	end
 
 	if cls.OnInitialized then
-		local info = debug.getinfo(cls.OnInitialized);
-		local args = "";
+		local info = debug.getinfo(cls.OnInitialized)
+		local args = ""
 		if info.isvararg then
-			args = "...";
+			args = "..."
 		else
 			for i = 1, info.nparams-1 do
-				args = args .. ", arg" .. i;
+				args = args .. ", arg" .. i
 			end
 		end
 
 		local str = [[
-			local cls = ...;
-			local old = cls.OnInitialized;
+			local cls = ...
+			local old = cls.OnInitialized
 
 			return function(self%s)
 				if not self.__constructing then
-					self.__constructing = true;
-					old(self%s);
-					self.__constructing = false;
+					self.__constructing = true
+					old(self%s)
+					self.__constructing = false
 				else
-					old(self%s);
+					old(self%s)
 				end
 			end
-		]];
+		]]
 
-		str = str:format(args, args, args);
-		cls.OnInitialized = assert(loadstring(str))(cls);
+		str = str:format(args, args, args)
+		cls.OnInitialized = assert(loadstring(str))(cls)
 	end
 end
 
 function BeginMixinDetection()
 	for i = 1, #classes do
-		DetectMixins(classes[i]);
+		DetectMixins(classes[i])
 	end
 end

@@ -1,3 +1,3 @@
-Script.Load("lua/NS2Optimizations/MixinDetector.lua");
+Script.Load("lua/NS2Optimizations/MixinDetector.lua")
 
-BeginMixinDetection();
+BeginMixinDetection()

@@ -19,8 +19,8 @@ if Shared then
 	Script.Load "lua/NS2Optimizations/TraceBoxCache.lua"
 end
 
-ModLoader.SetupFileHook("lua/Mixins/BaseModelMixin.lua", "lua/NS2Optimizations/BaseModelMixin.lua", "post");
-ModLoader.SetupFileHook("lua/ScoringMixin.lua", "lua/NS2Optimizations/ScoringMixin.lua", "post");
+ModLoader.SetupFileHook("lua/Mixins/BaseModelMixin.lua", "lua/NS2Optimizations/BaseModelMixin.lua", "post")
+ModLoader.SetupFileHook("lua/ScoringMixin.lua", "lua/NS2Optimizations/ScoringMixin.lua", "post")
 ModLoader.SetupFileHook("lua/Entity.lua", "lua/NS2Optimizations/Entity.lua", "post")
 
 ModLoader.SetupFileHook("lua/Observatory.lua",              "lua/NS2Optimizations/Observatory.lua", "post")
@@ -32,5 +32,5 @@ if Server then
 	ModLoader.SetupFileHook("lua/Player.lua",                "lua/NS2Optimizations/Player_Server.lua", "post")
 end
 
-ModLoader.SetupFileHook("lua/MixinUtility.lua", "lua/NS2Optimizations/MixinUtility.lua", "replace");
-ModLoader.SetupFileHook("lua/MixinDispatcherBuilder.lua", "", "halt");
+ModLoader.SetupFileHook("lua/MixinUtility.lua", "lua/NS2Optimizations/MixinUtility.lua", "replace")
+ModLoader.SetupFileHook("lua/MixinDispatcherBuilder.lua", "", "halt")
