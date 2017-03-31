@@ -40,18 +40,18 @@ local kRelevantToAll = kRelevantToAll
 local oldUpdateIncludeRelevancyMask_key = newproxy()
 local old_include_mask = newproxy()
 
-local function GetPlayersToBeacon(toOrigin)
+local function GetPlayersToBeacon(self)
 	local players = { }
 
 	self:GetTeam():ForEachPlayer(Closure [[
-		self toOrigin, GetIsPlayerNearby, players
+		self toOrigin players
 		args player
 		if not player:isa "Marine" or (player:GetOrigin() - toOrigin):GetLengthSquared() < (kDistressBeaconRange*1.1)^2 then
 			return
 		end
 
 		table.insert(players, player)
-	]] {toOrigin, GetIsPlayerNearby, players})
+	]] {self:GetDistressOrigin(), players})
 
 	return players
 end
@@ -95,7 +95,7 @@ else
 end
 
 local function beaconStart(self, target, delay)
-	Log("Starting beacon transition for player %s!", player)
+	Log("Starting beacon transition for player %s!", self)
 	if not kIgnorePlayers then
 		self:AddTimedCallback(makePlayerRelevant, delay)
 	end
@@ -109,8 +109,8 @@ function Observatory:TriggerDistressBeacon()
 	local distressOrigin = self:GetDistressOrigin()
 
 	-- May happen at the end of the game?
-	if not distressOrigin then
-		return false
+	if not distressOrigin or self:GetIsBeaconing() then
+		return false, true
 	end
 
 	local step = kDistressBeaconTime / Server.GetNumPlayers()
@@ -132,12 +132,22 @@ function Observatory:TriggerDistressBeacon()
 	local entities = self:GetCommandStation():GetLocationEntity():GetEntitiesInTrigger()
 	local constructs = {}
 	local ips = {}
-	for i = 1, #entities do
-		if entities[i]:isa "InfantryPortal" then
-			table.insert(ips, entities[i])
-			table.insert(constructs, entities[i])
-		elseif HasMixin(entities[i], "Construct") then
-			table.insert(constructs, entities[i])
+	if #entities == 0 then
+		entities = GetEntitiesWithMixinWithinRange("Construct", distressOrigin, 20)
+		constructs = entities
+		for i = 1, #constructs do
+			if constructs[i]:isa "InfantryPortal" then
+				table.insert(ips, constructs[i])
+			end
+		end
+	else
+		for i = 1, #entities do
+			if entities[i]:isa "InfantryPortal" then
+				table.insert(ips, entities[i])
+				table.insert(constructs, entities[i])
+			elseif HasMixin(entities[i], "Construct") then
+				table.insert(constructs, entities[i])
+			end
 		end
 	end
 	local step = kDistressBeaconTime / #constructs
@@ -160,7 +170,7 @@ function Observatory:TriggerDistressBeacon()
 		delay = delay + step
 	end
 
-	return true
+	return oldTriggerDistressBeacon(self)
 end
 
 function Observatory:PerformDistressBeacon()
@@ -172,10 +182,16 @@ function Observatory:PerformDistressBeacon()
 		return false
 	end
 
-	local to_beacon = GetPlayersToBeacon(distressOrigin)
+	local to_beacon = GetPlayersToBeacon(self)
 
 	local spawnPoints = GetBeaconPointsForTechPoint(self:GetCommandStation().attachedId)
-	assert(spawnPoints)
+	Log("attached: %s", Shared.GetEntity(self:GetCommandStation().attachedId))
+	for k in pairs(BeaconPoints) do
+		Log("tech point: %s", k)
+	end
+	if not spawnPoints then
+		Log "No spawnpoints!"
+	end
 
 	for i = 1, #to_beacon do
 		local player = to_beacon[i]

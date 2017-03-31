@@ -1,6 +1,5 @@
-local beaconPoints = setmetatable({}, {
-	__mode = "kv"
-})
+local beaconPoints = {}
+BeaconPoints = beaconPoints
 
 function GetBeaconPointsForTechPoint(tp)
    return beaconPoints[tp]
@@ -48,11 +47,12 @@ function Gamerules:OnMapPostLoad()
       local spawnPoints = findSpawnPoints(tp:GetOrigin() + Vector(0, 1, 0), 150)
 
 		local center = tp:GetOrigin() + Vector(0, 1, 0)
-      beaconPoints[tp:GetId()] = table.sort(spawnPoints, function(x, y)
+		table.sort(spawnPoints, function(x, y)
 			return (x - center):GetLengthSquared() < (y - center):GetLengthSquared()
 		end)
+      beaconPoints[tp:GetId()] = spawnPoints
 		Log("BeaconOpti: Found %s spawn points for TechPoint-%s in %s!",
-			#spawnPoints,
+			#beaconPoints[tp:GetId()],
 			tp:GetId(),
 			tp:GetLocationName()
 		)
