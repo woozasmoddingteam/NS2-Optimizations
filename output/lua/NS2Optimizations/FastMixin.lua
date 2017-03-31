@@ -86,7 +86,7 @@ class = function(name)
 	end
 end
 
-ModLoader.SetupFileHook("lua/MixinUtility.lua", "lua/FastMixin/MixinUtility.lua", "replace");
+ModLoader.SetupFileHook("lua/MixinUtility.lua", "lua/NS2Optimizations/MixinUtility.lua", "replace");
 ModLoader.SetupFileHook("lua/MixinDispatcherBuilder.lua", true, "halt");
-ModLoader.SetupFileHook("lua/Mixins/BaseModelMixin.lua", "lua/FastMixin/BaseModelMixin.lua", "post");
-ModLoader.SetupFileHook("lua/ScoringMixin.lua", "lua/FastMixin/ScoringMixin.lua", "post");
+ModLoader.SetupFileHook("lua/Mixins/BaseModelMixin.lua", "lua/NS2Optimizations/BaseModelMixin.lua", "post");
+ModLoader.SetupFileHook("lua/ScoringMixin.lua", "lua/NS2Optimizations/ScoringMixin.lua", "post");

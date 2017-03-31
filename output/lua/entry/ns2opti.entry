@@ -1,0 +1,27 @@
+Script.Load("lua/GeneralOpti/Closure.lua")
+
+local default_config = Server and {
+	TraceCacheSize = {
+		Ray     = 16,
+		Box     = 16,
+		Capsule = 32
+	},
+	InfinitePlayerRelevancy = false,
+	UnsafeTableOptimizations = false,
+	FastMixin = true
+} or {
+	TraceCacheSize = {
+		Ray     = 4,
+		Box     = 4,
+		Capsule = 16,
+	}
+	UnsafeTableOptimizations = false,
+	FastMixin = true
+}
+
+local kNS2OptiConfig = LoadConfigFile(Server and "NS2OptiServer.json" or "NS2OptiClient", default_config)
+
+modEntry = {
+         FileHooks = "lua/NS2Optimizations/FileHooks.lua",
+         Priority = 100
+}

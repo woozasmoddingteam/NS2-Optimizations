@@ -8,6 +8,8 @@ local max = math.max
 local floor = math.floor
 local ceil = math.ceil
 local print = Shared.Message or print
+local kEnableUnsafe = kNS2OptiConfig.UnsafeTableOptimizations
+
 local elementEqualsElement
 
 local original_table_clear = require("table.clear")
@@ -27,7 +29,7 @@ table.new = require "table.new"
 local table_new = table.new
 
 function table.array(size)
-    return table_new(size+1, 0)
+	 return table_new(size+1, 0)
 end
 
 function table.dictionary(slots)
@@ -66,14 +68,14 @@ _G.elementEqualsElement = elementEqualsElement
 
 function table.copy(src, dst, no_clear)
 
-	local len = #dst
-    if len > 0 and not no_clear then
-        original_table_clear(dst)
-    end
+	if not no_clear then
+	  original_table_clear(dst)
+	end
 
+	local len = #dst
 	for i = 1, #src do
 		dst[len+i] = Copy(src[i])
-    end
+	end
 
 end
 
@@ -87,7 +89,7 @@ function table.find(findTable, value)
 		end
 	end
 
-    return nil
+	 return nil
 
 end
 
@@ -95,14 +97,14 @@ local table_find = table.find
 
 function table.insertunique(t, v)
 
-    if table_find(t, v) == nil then
+	 if table_find(t, v) == nil then
 
-        table_insert(t, v)
-        return true
+		  table_insert(t, v)
+		  return true
 
-    end
+	 end
 
-    return false
+	 return false
 
 end
 
@@ -112,7 +114,7 @@ function table.count(t, log)
 	if t then
 		return #t
 	elseif log then
-        Shared.Message("table.count() - Nil table passed in, returning 0.")
+		  Shared.Message("table.count() - Nil table passed in, returning 0.")
 	end
 	return 0
 end
@@ -169,7 +171,7 @@ local table_icontains = table.icontains
 
 function table.contains(t, v)
 
-	if #t > 0 then
+	if kEnableUnsafe and #t > 0 then
 		return table_icontains(t, v)
 	else
 		return table_dcontains(t, v)
@@ -190,11 +192,11 @@ function table.foreachfunctor(t, functor)
 
 	if not t then return end
 
-    for i = 1, #t do
+	 for i = 1, #t do
 
-        functor(t[i])
+		  functor(t[i])
 
-    end
+	 end
 
 end
 
@@ -209,18 +211,18 @@ end
 
 -- Returns the numeric median of the given array of numbers
 function table.median( t )
-    local temp = {}
+	 local temp = {}
 
-    --deep copy all numbers
-    for i = 1, #t do
-        temp[i] = t[i]
-    end
+	 --deep copy all numbers
+	 for i = 1, #t do
+		  temp[i] = t[i]
+	 end
 
-    if #temp == 0 then
-        return -1
-    end
+	 if #temp == 0 then
+		  return -1
+	 end
 
-    table_sort(temp)
+	 table_sort(temp)
 
 	start = start or 1
 	stop = stop or #t
@@ -233,14 +235,14 @@ function table.median( t )
 end
 
 function table.mean( t )
-    local sum = 0
-    local count = 0
+	 local sum = 0
+	 local count = 0
 
-    for i = 1, #t do
+	 for i = 1, #t do
 		sum = sum + t[i]
-    end
+	 end
 
-    return sum / #t
+	 return sum / #t
 end
 
 function table.dmode(t)
@@ -311,7 +313,7 @@ local table_imode = table.imode
 
 -- Get the mode of a table. Returns a table of values.
 function table.mode(t)
-	if #t > 0 then
+	if kEnableUnsafe and #t > 0 then
 		return table_imode(t)
 	else
 		return table_dmode(t)
@@ -339,7 +341,7 @@ end
 local table_dduplicate = table.dduplicate
 
 function table.duplicate(t)
-	if #t > 0 then
+	if kEnableUnsafe and #t > 0 then
 		return table_iduplicate(t)
 	else
 		return table_dduplicate(t)
@@ -348,13 +350,13 @@ end
 
 function table.removeConditional(t, filter)
 
-    if t ~= nil then
+	 if t ~= nil then
 
 		local len = #t
 		local i = 1
 		while i <= len do
 
-            local e
+				local e
 
 			::loop:: do
 				e = t[i]
@@ -366,10 +368,10 @@ function table.removeConditional(t, filter)
 				end
 			end
 
-            i = i + 1
+				i = i + 1
 
-        end
+		  end
 
-    end
+	 end
 
 end

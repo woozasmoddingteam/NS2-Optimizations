@@ -13,7 +13,10 @@ local Vector = Vector
 local diff = CacheUtility.VectorDiff
 local near = CacheUtility.ScalarNear
 
-local kCacheSize        = kTraceCachingConfig.Capsule
+local kCacheSize        = kNS2OptiConfig.TraceCacheSize.Capsule
+if kCacheSize == 0 then
+	return
+end
 local kCacheElements    = 8
 local keyStart          = 0
 local keyStop           = 1
@@ -139,6 +142,7 @@ end
 Event.Hook("Console_capsule_cache_stats", function()
 	Log("Capsule Cache hits:   %s", cache_hits)
 	Log("Capsule Cache misses: %s", cache_misses)
+	Log("Capsule Cache hit percentage: %s", cache_hits / (cache_hits + cache_misses))
 end)
 
 clear()

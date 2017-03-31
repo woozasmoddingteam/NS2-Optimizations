@@ -1,0 +1,8 @@
+
+modEntry = {
+	-- We do this because otherwise it wouldn't get loaded after all classes are done being loaded.
+	Server = "lua/FastMixin/Late.lua",
+	Predict = "lua/FastMixin/Late.lua",
+	Client = "lua/FastMixin/Late.lua",
+	Priority = -1000
+}

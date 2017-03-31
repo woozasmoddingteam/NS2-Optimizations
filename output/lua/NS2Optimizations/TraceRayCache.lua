@@ -11,7 +11,10 @@ local Vector = Vector
 
 local diff = CacheUtility.VectorDiff
 
-local kCacheSize      = kTraceCachingConfig.Ray
+local kCacheSize      = kNS2OptiConfig.TraceCacheSize.Ray
+if kCacheSize == 0 then
+	return
+end
 local kCacheElements  = 8
 local keyStart        = 0
 local keyStop         = 1
@@ -116,6 +119,7 @@ end
 Event.Hook("Console_ray_cache_stats", function()
 	Log("Ray Cache hits:   %s", cache_hits)
 	Log("Ray Cache misses: %s", cache_misses)
+	Log("Ray Cache hit percentage: %s", cache_hits / (cache_hits + cache_misses))
 end)
 
 --[=[

@@ -1,6 +1,0 @@
-Script.Load("lua/GeneralOpti/Closure.lua")
-
-modEntry = {
-         FileHooks = "lua/GeneralOpti/FileHooks.lua",
-         Priority = 15
-}
