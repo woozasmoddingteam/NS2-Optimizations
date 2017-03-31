@@ -1,6 +1,7 @@
 local void = function() end
 local log = Server and Log or void
-local kUnsafe = kNS2OptiConfig.FastMIxin
+local kUnsafe = kNS2OptiConfig.FastMixin
+
 function CreateMixin(mixin)
 	if mixin then
 		for k in pairs(mixin) do
@@ -11,6 +12,7 @@ function CreateMixin(mixin)
 	end
 	return mixin
 end
+
 function AddMixinNetworkVars(mixin, networkVars)
 	if mixin.networkVars then
 		for k, v in pairs(mixin.networkVars) do
@@ -22,6 +24,7 @@ function AddMixinNetworkVars(mixin, networkVars)
 		end
 	end
 end
+
 function InitMixin(self, mixin, optionalMixinData)
 	if kUnsafe and self.__constructing then
 		local meta = getmetatable(self.__class)
@@ -147,7 +150,6 @@ function InitMixinForInstance(self, mixin)
 	end
 	if not self.__mixintypes then
 		if kUnsafe then
-			log("WARNING: Improperly initialized!")
 			self.__constructing = false
 		end
 		self.__mixintypes = {}

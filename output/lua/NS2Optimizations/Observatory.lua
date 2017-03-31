@@ -1,6 +1,6 @@
 
 do
-	local nearest_techpoint_key = newproxy()
+	local nearest_commandstation_key = newproxy()
 
 	local oldOnInitialized = Observatory.OnInitialized
 	function Observatory:OnInitialized()
@@ -77,13 +77,15 @@ local function makeIrrelevant(self)
 	self[old_include_mask] = nil
 end
 
+local makePlayerIrrelevant
+
 if kIgnorePlayers then
-	local function makePlayerIrrelevant(self)
+	function makePlayerIrrelevant(self)
 		Log("%s made irrelevant!", self)
 		self:SetLOSUpdates(true)
 	end
 else
-	local function makePlayerIrrelevant(self)
+	function makePlayerIrrelevant(self)
 		Log("%s made irrelevant!", self)
 		self.UpdateIncludeRelevancyMask = self[oldUpdateIncludeRelevancyMask_key]
 		self[oldUpdateIncludeRelevancyMask_key] = nil
@@ -118,14 +120,14 @@ function Observatory:TriggerDistressBeacon()
 		self beaconStart step target
 		args player
 
-		beaconStart(player, target, self.delay)
-
-		self.delay = self.delay + step
+		if player:isa "Marine" then
+			beaconStart(player, target, self.delay)
+			self.delay = self.delay + step
+		end
 	]=] (closure_self)
 
 	GetGamerules():GetTeam1():ForEachPlayer(functor) -- Marines
 	GetGamerules():GetTeam2():ForEachPlayer(functor) -- Aliens
-
 
 	local entities = self:GetCommandStation():GetLocationEntity():GetEntitiesInTrigger()
 	local constructs = {}
@@ -140,7 +142,7 @@ function Observatory:TriggerDistressBeacon()
 	end
 	local step = kDistressBeaconTime / #constructs
 
-	Log("Found %s constructs and % IPs; step: %s", #constructs, #ips, step)
+	Log("Found %s constructs and %s IPs; step: %s", #constructs, #ips, step)
 
 	local delay = 0
 	for i = 1, #constructs do
@@ -157,6 +159,8 @@ function Observatory:TriggerDistressBeacon()
 		ips[i]:AddTimedCallback(ips[i].FinishSpawn, delay)
 		delay = delay + step
 	end
+
+	return true
 end
 
 function Observatory:PerformDistressBeacon()

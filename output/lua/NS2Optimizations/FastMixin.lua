@@ -1,4 +1,4 @@
-local kUnsafe = kNS2OptiConfig.FastMIxin
+local kUnsafe = kNS2OptiConfig.FastMixin
 local toString = function(v)
 	local err, str = pcall(ToString, v)
 	if type(v) == "table" then

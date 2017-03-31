@@ -1,5 +1,5 @@
 Script.Load("lua/MixinUtility.lua")
-local kUnsafe = kNS2OptiConfig.FastMIxin
+local kUnsafe = kNS2OptiConfig.FastMixin
 local classes = debug.getregistry().__CLASSES
 
 local metatable = {

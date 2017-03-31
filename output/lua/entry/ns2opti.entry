@@ -22,6 +22,6 @@ local default_config = Server and {
 kNS2OptiConfig = LoadConfigFile(Server and "NS2OptiServer.json" or "NS2OptiClient.json", default_config)
 
 modEntry = {
-         FileHooks = "lua/NS2Optimizations/FileHooks.lua",
-         Priority = 100
+   FileHooks = "lua/NS2Optimizations/FileHooks.lua",
+   Priority = 100
 }
