@@ -1,6 +1,6 @@
 
 local index = 1
-while assert(debug.getupvalue(LOSMixin.OnUpdate, index)) ~= "SharedUpdate" then
+while assert(debug.getupvalue(LOSMixin.OnUpdate, index)) ~= "SharedUpdate" do
 	index = index + 1
 end
 

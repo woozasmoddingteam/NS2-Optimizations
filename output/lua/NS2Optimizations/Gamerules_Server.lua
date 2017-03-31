@@ -49,7 +49,7 @@ function Gamerules:OnMapPostLoad()
 
 		local center = tp:GetOrigin() + Vector(0, 1, 0)
       beaconPoints[tp:GetId()] = table.sort(spawnPoints, function(x, y)
-			return (x:GetOrigin() - center:GetOrigin()):GetLengthSquared() < (y:GetOrigin() - center:GetOrigin()):GetLengthSquared()
+			return (x - center):GetLengthSquared() < (y - center):GetLengthSquared()
 		end)
 		Log("BeaconOpti: Found %s spawn points for TechPoint-%s in %s!",
 			#spawnPoints,

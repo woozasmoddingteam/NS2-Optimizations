@@ -8,8 +8,7 @@ They indicate badly written code, and help debugging.
 ------------------------------
 ]=]
 
-local kRelevantToAll = 0x8000000
-local config = kNS2OptiConfig
+kRelevantToAll = 0x8000000
 
 ModLoader.SetupFileHook("lua/Table.lua", "lua/NS2Optimizations/Table.lua", "post")
 ModLoader.SetupFileHook("lua/Entity.lua", "lua/NS2Optimizations/Entity.lua", "post")
