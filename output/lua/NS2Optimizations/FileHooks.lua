@@ -8,7 +8,31 @@ They indicate badly written code, and help debugging.
 ------------------------------
 ]=]
 
+Script.Load("lua/NS2Optimizations/Closure.lua")
+
+local default_config = Server and {
+	TraceCacheSize = {
+		Ray     = 16,
+		Box     = 16,
+		Capsule = 32
+	},
+	InfinitePlayerRelevancy = false,
+	UnsafeTableOptimizations = false,
+	FastMixin = true
+} or {
+	TraceCacheSize = {
+		Ray     = 4,
+		Box     = 4,
+		Capsule = 16
+	},
+	UnsafeTableOptimizations = false,
+	FastMixin = true
+}
+
+kNS2OptiConfig = LoadConfigFile(Server and "NS2OptiServer.json" or "NS2OptiClient.json", default_config)
+
 kRelevantToAll = 0x8000000
+
 Script.Load "lua/NS2Optimizations/Table.lua"
 Script.Load "lua/NS2Optimizations/Utility.lua"
 Script.Load "lua/NS2Optimizations/FastMixin.lua"
