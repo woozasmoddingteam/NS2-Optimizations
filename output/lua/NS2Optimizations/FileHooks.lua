@@ -60,6 +60,8 @@ ModLoader.SetupFileHook("lua/MixinUtility.lua", "lua/NS2Optimizations/MixinUtili
 ModLoader.SetupFileHook("lua/MixinDispatcherBuilder.lua", "", "halt")
 
 local ray_hit, ray_miss, box_hit, box_miss, capsule_hit, capsule_miss = 0, 0, 0, 0, 0, 0
+local time = 0
+
 local function cacheStats()
 	local ray_hit_curr, ray_miss_curr = TraceRayCacheStats()
 	local box_hit_curr, box_miss_curr = TraceBoxCacheStats()
@@ -70,27 +72,56 @@ local function cacheStats()
 	local box_miss_diff = box_miss_curr - box_miss
 	local capsule_hit_diff  = capsule_hit_curr  - capsule_hit
 	local capsule_miss_diff = capsule_miss_curr - capsule_miss
+	local time_diff = Shared.GetTime() - time
+	time = Shared.GetTime()
 	ray_hit,      ray_miss,      box_hit,      box_miss,      capsule_hit,      capsule_miss =
 	ray_hit_curr, ray_miss_curr, box_hit_curr, box_miss_curr, capsule_hit_curr, capsule_miss_curr
 	local small_delim = "--------"
 	local big_delim = small_delim .. small_delim
 	Log(big_delim)
+	Log("Time passed: %s", time_diff)
+	Log(small_delim)
 	Log("Box Cache hits:   %s", box_hit_diff)
 	Log("Box Cache misses: %s", box_miss_diff)
-	Log("Box Cache hit percentage: %s", box_hit_diff / (box_hit_diff + box_miss_diff))
+	Log("Box Cache hit percentage: %s%%", 100 * box_hit_diff / (box_hit_diff + box_miss_diff))
 	Log(small_delim)
 	Log("Capsule Cache hits:   %s", capsule_hit_diff)
 	Log("Capsule Cache misses: %s", capsule_miss_diff)
-	Log("Capsule Cache hit percentage: %s", capsule_hit_diff / (capsule_hit_diff + capsule_miss_diff))
+	Log("Capsule Cache hit percentage: %s%%", 100 * capsule_hit_diff / (capsule_hit_diff + capsule_miss_diff))
 	Log(small_delim)
 	Log("Ray Cache hits:   %s", ray_hit_diff)
 	Log("Ray Cache misses: %s", ray_miss_diff)
-	Log("Ray Cache hit percentage: %s", ray_hit_diff / (ray_hit_diff + ray_miss_diff))
+	Log("Ray Cache hit percentage: %s%%", 100 * ray_hit_diff / (ray_hit_diff + ray_miss_diff))
+	Log(big_delim)
+end
+
+local function cacheStatsTotal()
+	local ray_hit_curr, ray_miss_curr = TraceRayCacheStats()
+	local box_hit_curr, box_miss_curr = TraceBoxCacheStats()
+	local capsule_hit_curr, capsule_miss_curr = TraceCapsuleCacheStats()
+	local small_delim = "--------"
+	local big_delim = small_delim .. small_delim
+	Log(big_delim)
+	Log("Time passed: %s", Shared.GetTime())
+	Log(small_delim)
+	Log("Box Cache hits:   %s", box_hit_curr)
+	Log("Box Cache misses: %s", box_miss_curr)
+	Log("Box Cache hit percentage: %s%%", 100 * box_hit_curr / (box_hit_curr + box_miss_curr))
+	Log(small_delim)
+	Log("Capsule Cache hits:   %s", capsule_hit_curr)
+	Log("Capsule Cache misses: %s", capsule_miss_curr)
+	Log("Capsule Cache hit percentage: %s%%", 100 * capsule_hit_curr / (capsule_hit_curr + capsule_miss_curr))
+	Log(small_delim)
+	Log("Ray Cache hits:   %s", ray_hit_curr)
+	Log("Ray Cache misses: %s", ray_miss_curr)
+	Log("Ray Cache hit percentage: %s%%", 100 * ray_hit_curr / (ray_hit_curr + ray_miss_curr))
 	Log(big_delim)
 end
 
 if Server then
 	Event.Hook("Console_sv_trace_cache_diff", cacheStats)
+	Event.Hook("Console_sv_trace_cache_total", cacheStatsTotal)
 else
 	Event.Hook("Console_trace_cache_diff", cacheStats)
+	Event.Hook("Console_trace_cache_total", cacheStatsTotal)
 end

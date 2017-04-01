@@ -126,11 +126,4 @@ Event.Hook("Console_ray_cache_stats", function()
 	Log("Ray Cache hit percentage: %s", cache_hits / (cache_hits + cache_misses))
 end)
 
---[=[
-Event.Hook("Console_toggle_tracer", function()
-	caching_enabled = not caching_enabled
-	Log("Caching is now %s", caching_enabled and "on!" or "off.")
-end)
---]=]
-
 clear()
