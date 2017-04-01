@@ -12,7 +12,6 @@ do
 	function Observatory:SetOrigin(origin)
 		Entity.SetOrigin(self, origin)
 
-		Log("Finding commandstation for %s!", self)
 		self[nearest_commandstation_key] = GetNearest(self:GetOrigin(), "CommandStation", self:GetTeamNumber(), Lambda [[(...):GetIsBuilt() and (...):GetIsAlive()]])
 	end
 
@@ -66,7 +65,6 @@ local function makeRelevant(self)
 end
 
 local function makePlayerRelevant(self)
-	Log("%s made relevant!", self)
 	self[oldUpdateIncludeRelevancyMask_key] = self.UpdateClientRelevancyMask
 	self.UpdateIncludeRelevancyMask = altUpdateIncludeRelevancyMask
 	self:UpdateIncludeRelevancyMask()
@@ -81,12 +79,10 @@ local makePlayerIrrelevant
 
 if kIgnorePlayers then
 	function makePlayerIrrelevant(self)
-		Log("%s made irrelevant!", self)
 		self:SetLOSUpdates(true)
 	end
 else
 	function makePlayerIrrelevant(self)
-		Log("%s made irrelevant!", self)
 		self.UpdateIncludeRelevancyMask = self[oldUpdateIncludeRelevancyMask_key]
 		self[oldUpdateIncludeRelevancyMask_key] = nil
 		self:UpdateIncludeRelevancyMask()
@@ -95,7 +91,6 @@ else
 end
 
 local function beaconStart(self, target, delay)
-	Log("Starting beacon transition for player %s!", self)
 	if not kIgnorePlayers then
 		self:AddTimedCallback(makePlayerRelevant, delay)
 	end
@@ -152,7 +147,7 @@ function Observatory:TriggerDistressBeacon()
 	end
 	local step = kDistressBeaconTime / #constructs
 
-	Log("Found %s constructs and %s IPs; step: %s", #constructs, #ips, step)
+	Shared.Message("Found " .. #constructs .. " constructs and " .. #ips .. " IPs; step: " .. step)
 
 	local delay = 0
 	for i = 1, #constructs do
@@ -185,13 +180,6 @@ function Observatory:PerformDistressBeacon()
 	local to_beacon = GetPlayersToBeacon(self)
 
 	local spawnPoints = GetBeaconPointsForTechPoint(self:GetCommandStation().attachedId)
-	Log("attached: %s", Shared.GetEntity(self:GetCommandStation().attachedId))
-	for k in pairs(BeaconPoints) do
-		Log("tech point: %s", k)
-	end
-	if not spawnPoints then
-		Log "No spawnpoints!"
-	end
 
 	for i = 1, #to_beacon do
 		local player = to_beacon[i]
