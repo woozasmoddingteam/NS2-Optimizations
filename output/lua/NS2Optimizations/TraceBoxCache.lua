@@ -108,6 +108,10 @@ function Shared.TraceBox(extents, start, stop, collisionRep, physicsMask, filter
 	return trace
 end
 
+function TraceBoxCacheStats()
+	return cache_hits, cache_misses
+end
+
 Event.Hook("Console_box_cache_stats", function()
 	Log("Box Cache hits:   %s", cache_hits)
 	Log("Box Cache misses: %s", cache_misses)

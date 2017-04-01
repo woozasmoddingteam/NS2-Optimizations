@@ -116,6 +116,10 @@ function Shared.TraceRay(start, stop, collisionRep, physicsMask, filter)
 	return trace
 end
 
+function TraceRayCacheStats()
+	return cache_hits, cache_misses
+end
+
 Event.Hook("Console_ray_cache_stats", function()
 	Log("Ray Cache hits:   %s", cache_hits)
 	Log("Ray Cache misses: %s", cache_misses)

@@ -58,3 +58,39 @@ end
 
 ModLoader.SetupFileHook("lua/MixinUtility.lua", "lua/NS2Optimizations/MixinUtility.lua", "replace")
 ModLoader.SetupFileHook("lua/MixinDispatcherBuilder.lua", "", "halt")
+
+local ray_hit, ray_miss, box_hit, box_miss, capsule_hit, capsule_miss = 0, 0, 0, 0, 0, 0
+local function cacheStats()
+	local ray_hit_curr, ray_miss_curr = TraceRayCacheStats()
+	local box_hit_curr, box_miss_curr = TraceBoxCacheStats()
+	local capsule_hit_curr, capsule_miss_curr = TraceCapsuleCacheStats()
+	local ray_hit_diff  = ray_hit_curr  - ray_hit
+	local ray_miss_diff = ray_miss_curr - ray_miss
+	local box_hit_diff  = box_hit_curr  - box_hit
+	local box_miss_diff = box_miss_curr - box_miss
+	local capsule_hit_diff  = capsule_hit_curr  - capsule_hit
+	local capsule_miss_diff = capsule_miss_curr - capsule_miss
+	ray_hit,      ray_miss,      box_hit,      box_miss,      capsule_hit,      capsule_miss =
+	ray_hit_curr, ray_miss_curr, box_hit_curr, box_miss_curr, capsule_hit_curr, capsule_miss_curr
+	local small_delim = "--------"
+	local big_delim = small_delim .. small_delim
+	Log(big_delim)
+	Log("Box Cache hits:   %s", box_hit_diff)
+	Log("Box Cache misses: %s", box_miss_diff)
+	Log("Box Cache hit percentage: %s", box_hit_diff / (box_hit_diff + box_miss_diff))
+	Log(small_delim)
+	Log("Capsule Cache hits:   %s", capsule_hit_diff)
+	Log("Capsule Cache misses: %s", capsule_miss_diff)
+	Log("Capsule Cache hit percentage: %s", capsule_hit_diff / (capsule_hit_diff + capsule_miss_diff))
+	Log(small_delim)
+	Log("Ray Cache hits:   %s", ray_hit_diff)
+	Log("Ray Cache misses: %s", ray_miss_diff)
+	Log("Ray Cache hit percentage: %s", ray_hit_diff / (ray_hit_diff + ray_miss_diff))
+	Log(big_delim)
+end
+
+if Server then
+	Event.Hook("Console_sv_trace_cache_diff", cacheStats)
+else
+	Event.Hook("Console_trace_cache_diff", cacheStats)
+end

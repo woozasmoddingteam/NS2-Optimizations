@@ -139,6 +139,10 @@ function Shared.TraceCapsule(start, stop, radius, height, collisionRep, physicsM
 	return trace
 end
 
+function TraceCapsuleCacheStats()
+	return cache_hits, cache_misses
+end
+
 Event.Hook("Console_capsule_cache_stats", function()
 	Log("Capsule Cache hits:   %s", cache_hits)
 	Log("Capsule Cache misses: %s", cache_misses)
