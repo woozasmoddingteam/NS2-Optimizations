@@ -95,10 +95,18 @@ local function cacheStats()
 	Log(big_delim)
 end
 
+local function maybe(f)
+	if f then
+		return f()
+	else
+		return 0, 0
+	end
+end
+
 local function cacheStatsTotal()
-	local ray_hit_curr, ray_miss_curr = TraceRayCacheStats()
-	local box_hit_curr, box_miss_curr = TraceBoxCacheStats()
-	local capsule_hit_curr, capsule_miss_curr = TraceCapsuleCacheStats()
+	local ray_hit_curr, ray_miss_curr = maybe(TraceRayCacheStats)
+	local box_hit_curr, box_miss_curr = maybe(TraceBoxCacheStats)
+	local capsule_hit_curr, capsule_miss_curr = maybe(TraceCapsuleCacheStats)
 	local small_delim = "--------"
 	local big_delim = small_delim .. small_delim
 	Log(big_delim)
