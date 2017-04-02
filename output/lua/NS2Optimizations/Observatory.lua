@@ -179,11 +179,16 @@ function Observatory:PerformDistressBeacon()
 
 	local to_beacon = GetPlayersToBeacon(self)
 
+	Shared.Message("Found " .. #to_beacon .. " players to beacon")
+
 	local spawnPoints = GetBeaconPointsForTechPoint(self:GetCommandStation().attachedId)
 
 	for i = 1, #to_beacon do
 		local player = to_beacon[i]
 
+		if HasMixin(player, "SmoothedRelevancy") then
+         player:StartSmoothedRelevancy(spawnPoints[i])
+		end
 		player:SetOrigin(spawnPoints[i])
 		player:TriggerBeaconEffects()
 	end
