@@ -10,6 +10,8 @@ They indicate badly written code, and help debugging.
 
 Script.Load("lua/NS2Optimizations/Closure.lua")
 
+local kVersion = 1
+
 local default_config = Server and {
 	TraceCacheSize = {
 		Ray     = 16,
@@ -20,7 +22,8 @@ local default_config = Server and {
 	TraceRelativeAcceptance = 0.2,
 	InfinitePlayerRelevancy = false,
 	UnsafeTableOptimizations = false,
-	FastMixin = true
+	FastMixin = true,
+	__Version = kVersion
 } or {
 	TraceCacheSize = {
 		Ray     = 4,
@@ -30,10 +33,21 @@ local default_config = Server and {
 	TraceAbsoluteAcceptance = 0.1,
 	TraceRelativeAcceptance = 0.2,
 	UnsafeTableOptimizations = false,
-	FastMixin = true
+	FastMixin = true,
+	__Version = kVersion
 }
 
-kNS2OptiConfig = LoadConfigFile(Server and "NS2OptiServer.json" or "NS2OptiClient.json", default_config)
+local kConfigFile = Server and "NS2OptiServer.json" or "NS2OptiClient.json"
+kNS2OptiConfig = LoadConfigFile(kConfigFile, default_config)
+if kNS2OptiConfig.__Version ~= kVersion then
+	Shared.Message [[
+-----------------------------------------------
+Your NS2Opti config was reset due to an update!
+-----------------------------------------------
+	]]
+	SaveConfigFile(kConfigFile, default_config)
+	kNS2OptiConfig = default_config
+end
 
 kRelevantToAll = 0x8000000
 
