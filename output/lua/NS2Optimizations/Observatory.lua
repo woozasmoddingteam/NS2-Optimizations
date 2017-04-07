@@ -6,13 +6,17 @@ do
 	function Observatory:OnInitialized()
 		oldOnInitialized(self)
 
+		self:FindCommandStation()
+	end
+
+	function Observatory:FindCommandStation()
 		self[nearest_commandstation_key] = GetNearest(self:GetOrigin(), "CommandStation", self:GetTeamNumber(), Lambda [[(...):GetIsBuilt() and (...):GetIsAlive()]])
 	end
 
 	function Observatory:SetOrigin(origin)
 		Entity.SetOrigin(self, origin)
 
-		self[nearest_commandstation_key] = GetNearest(self:GetOrigin(), "CommandStation", self:GetTeamNumber(), Lambda [[(...):GetIsBuilt() and (...):GetIsAlive()]])
+		self:FindCommandStation()
 	end
 
 	function Observatory:GetCommandStation()
@@ -101,6 +105,7 @@ end
 local oldTriggerDistressBeacon = Observatory.TriggerDistressBeacon
 
 function Observatory:TriggerDistressBeacon()
+	self:FindCommandStation()
 	local distressOrigin = self:GetDistressOrigin()
 
 	-- May happen at the end of the game?
