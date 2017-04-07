@@ -2,29 +2,18 @@
 do
 	local nearest_commandstation_key = newproxy()
 
-	local oldOnInitialized = Observatory.OnInitialized
-	function Observatory:OnInitialized()
-		oldOnInitialized(self)
-
-		self:FindCommandStation()
-	end
-
 	function Observatory:FindCommandStation()
 		self[nearest_commandstation_key] = GetNearest(self:GetOrigin(), "CommandStation", self:GetTeamNumber(), Lambda [[(...):GetIsBuilt() and (...):GetIsAlive()]])
-	end
-
-	function Observatory:SetOrigin(origin)
-		Entity.SetOrigin(self, origin)
-
-		self:FindCommandStation()
-	end
-
-	function Observatory:GetCommandStation()
 		return self[nearest_commandstation_key]
 	end
 
+	function Observatory:GetCommandStation()
+		return self[nearest_commandstation_key] or self:FindCommandStation()
+	end
+
 	function Observatory:GetDistressOrigin()
-		return self:GetCommandStation():GetModelOrigin()
+		local cc = self:GetCommandStation()
+		return cc and cc:GetModelOrigin()
 	end
 end
 
