@@ -26,8 +26,9 @@ local keyFilter         = 4
 local keyTrace          = 5
 local keyInvRadius      = 6
 local keyInvHeight      = 7
-local kAcceptance       = 0.3
-local kScalarAcceptance = 0.2
+
+local kAcceptance       = kNS2OptiConfig.TraceAbsoluteAcceptance
+local kScalarAcceptance = kNS2OptiConfig.TraceRelativeAcceptance
 
 local cache = table_new(kCacheSize*kCacheElements, 0)
 --[=[
