@@ -30,8 +30,8 @@ local default_config = Server and {
 		Box     = 4,
 		Capsule = 16
 	},
-	TraceAbsoluteAcceptance = 5,
-	TraceRelativeAcceptance = 1,
+	TraceAbsoluteAcceptance = 0.1,
+	TraceRelativeAcceptance = 0.2,
 	UnsafeTableOptimizations = false,
 	FastMixin = true,
 	__Version = kVersion
