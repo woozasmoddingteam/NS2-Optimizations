@@ -3,12 +3,12 @@ do
 	local nearest_commandstation_key = newproxy()
 
 	function Observatory:FindCommandStation()
-		self[nearest_commandstation_key] = GetNearest(self:GetOrigin(), "CommandStation", self:GetTeamNumber(), Lambda [[(...):GetIsBuilt() and (...):GetIsAlive()]])
-		return self[nearest_commandstation_key]
+		self[nearest_commandstation_key] = GetNearest(self:GetOrigin(), "CommandStation", self:GetTeamNumber(), Lambda [[(...):GetIsBuilt() and (...):GetIsAlive()]]):GetId()
+		return Shared.GetEntity(self[nearest_commandstation_key])
 	end
 
 	function Observatory:GetCommandStation()
-		return self[nearest_commandstation_key] or self:FindCommandStation()
+		return Shared.GetEntity(self[nearest_commandstation_key]) or self:FindCommandStation()
 	end
 
 	function Observatory:GetDistressOrigin()

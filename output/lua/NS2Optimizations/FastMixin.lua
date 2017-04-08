@@ -1,34 +1,4 @@
 local kUnsafe = kNS2OptiConfig.FastMixin
-local toString = function(v)
-	local err, str = pcall(ToString, v)
-	if type(v) == "table" then
-		return tostring(v) .. " " .. str
-	elseif type(v) == "string" then
-		return "\"" .. str .. "\""
-	else
-		return str
-	end
-end
-
-debug.callstack = function(level)
-	level = level and level + 1 or 2
-	local str = "Call stack:"
-	local i = level
-	local func = debug.getinfo(i)
-	while func do
-		str = str .. ("\n\t#%d: %s:%i%s:%i"):format(i-level+1, func.name, func.currentline, func.source, func.linedefined)
-		local j = 1
-		local name, value = debug.getlocal(i, j)
-		while name do
-			str = str .. ("\n\t\t%s = %s"):format(name, toString(value))
-			j = j + 1
-			name, value = debug.getlocal(i, j)
-		end
-		i = i + 1
-		func = debug.getinfo(i)
-	end
-	return str
-end
 
 local oldclass = class
 
