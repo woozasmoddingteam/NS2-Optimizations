@@ -30,7 +30,7 @@ local default_config = Server and {
 		Box     = 4,
 		Capsule = 16
 	},
-	TraceAbsoluteAcceptance = 1,
+	TraceAbsoluteAcceptance = 5,
 	TraceRelativeAcceptance = 1,
 	UnsafeTableOptimizations = false,
 	FastMixin = true,
