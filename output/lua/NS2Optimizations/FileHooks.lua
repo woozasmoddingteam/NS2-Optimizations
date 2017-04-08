@@ -10,7 +10,7 @@ They indicate badly written code, and help debugging.
 
 Script.Load("lua/NS2Optimizations/Closure.lua")
 
-local kVersion = 1
+local kVersion = 2
 
 local default_config = Server and {
 	TraceCacheSize = {
@@ -30,8 +30,8 @@ local default_config = Server and {
 		Box     = 4,
 		Capsule = 16
 	},
-	TraceAbsoluteAcceptance = 0.1,
-	TraceRelativeAcceptance = 0.2,
+	TraceAbsoluteAcceptance = 10,
+	TraceRelativeAcceptance = 10,
 	UnsafeTableOptimizations = false,
 	FastMixin = true,
 	__Version = kVersion
