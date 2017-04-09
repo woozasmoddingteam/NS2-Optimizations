@@ -27,8 +27,16 @@ local keyTrace          = 5
 local keyInvRadius      = 6
 local keyInvHeight      = 7
 
-local kAcceptance       = kNS2OptiConfig.TraceAbsoluteAcceptance
-local kScalarAcceptance = kNS2OptiConfig.TraceRelativeAcceptance
+local kAcceptance       = kNS2OptiConfig.TraceAcceptance.Capsule.Absolute
+local kScalarAcceptance = kNS2OptiConfig.TraceAcceptance.Capsule.Relative
+
+function SetTraceCapsuleOptions(abs, rel)
+	kAcceptance, kScalarAcceptance = abs, rel
+end
+
+function GetTraceCapsuleOptions()
+	return kAcceptance, kScalarAcceptance
+end
 
 local cache = table_new(kCacheSize*kCacheElements, 0)
 --[=[

@@ -23,7 +23,15 @@ local keyPhysicsMask  = 3
 local keyFilter       = 4
 local keyTrace        = 5
 
-local kAcceptance       = kNS2OptiConfig.TraceAbsoluteAcceptance
+local kAcceptance       = kNS2OptiConfig.TraceAcceptance.Ray.Absolute
+
+function SetTraceRayOptions(abs)
+	kAcceptance = abs
+end
+
+function GetTraceRayOptions()
+	return kAcceptance
+end
 
 local cache = table_new(kCacheSize*kCacheElements, 0)
 --[=[

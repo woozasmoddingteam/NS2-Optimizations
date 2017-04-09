@@ -26,7 +26,15 @@ local keyFilter         = 4
 local keyTrace          = 5
 local keyExtents        = 6
 
-local kAcceptance       = kNS2OptiConfig.TraceAbsoluteAcceptance
+local kAcceptance       = kNS2OptiConfig.TraceAcceptance.Box.Absolute
+
+function SetTraceBoxOptions(abs)
+	kAcceptance = abs
+end
+
+function GetTraceBoxOptions()
+	return kAcceptance
+end
 
 local cache = table_new(kCacheSize*kCacheElements, 0)
 local prev_time

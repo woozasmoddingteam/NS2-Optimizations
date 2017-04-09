@@ -10,7 +10,7 @@ They indicate badly written code, and help debugging.
 
 Script.Load("lua/NS2Optimizations/Closure.lua")
 
-local kVersion = 4
+local kVersion = 5
 
 local default_config = Server and {
 	TraceCacheSize = {
@@ -18,8 +18,18 @@ local default_config = Server and {
 		Box     = 16,
 		Capsule = 32
 	},
-	TraceAbsoluteAcceptance = 0.1,
-	TraceRelativeAcceptance = 0.2,
+	TraceAcceptance = {
+		Ray     = {
+			Absolute = 0.1
+		},
+		Box     = {
+			Absolute = 0.1
+		},
+		Capsule = {
+			Absolute = 0.1,
+			Relative = 0.2
+		}
+	},
 	InfinitePlayerRelevancy = false,
 	UnsafeTableOptimizations = false,
 	FastMixin = true,
@@ -30,12 +40,29 @@ local default_config = Server and {
 		Box     = 4,
 		Capsule = 16
 	},
-	TraceAbsoluteAcceptance = 0.1,
-	TraceRelativeAcceptance = 0.2,
+	TraceAcceptance = {
+		Ray     = {
+			Absolute = 0.1
+		},
+		Box     = {
+			Absolute = 0.1
+		},
+		Capsule = {
+			Absolute = 0.1,
+			Relative = 0.2
+		}
+	},
 	UnsafeTableOptimizations = false,
 	FastMixin = true,
 	__Version = kVersion
 }
+
+Shared.RegisterNetworkMessage("trace_cache_options", {
+	ray = "float",
+	box = "float",
+	capsule_abs = "float",
+	capsule_rel = "float"
+})
 
 local kConfigFile = Server and "NS2OptiServer.json" or "NS2OptiClient.json"
 kNS2OptiConfig = LoadConfigFile(kConfigFile, default_config)
@@ -147,7 +174,20 @@ end
 if Server then
 	Event.Hook("Console_sv_trace_cache_diff", cacheStats)
 	Event.Hook("Console_sv_trace_cache_total", cacheStatsTotal)
+	Event.Hook("ClientConnect", function(client)
+		local data = {
+			box = GetTraceBoxOptions(),
+			ray = GetTraceRayOptions()
+		}
+		data.capsule_abs, data.capsule_rel = GetTraceCapsuleOptions()
+		Server.SendNetworkMessage("trace_cache_options", data, true)
+	end)
 else
 	Event.Hook("Console_trace_cache_diff", cacheStats)
 	Event.Hook("Console_trace_cache_total", cacheStatsTotal)
+	Client.HookNetworkMessage("trace_cache_options", function(data)
+		SetTraceRayOptions(data.ray)
+		SetTraceBoxOptions(data.box)
+		SetTraceCapsuleOptions(data.capsule_abs, data.capsule_rel)
+	end)
 end
