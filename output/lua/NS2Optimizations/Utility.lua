@@ -45,7 +45,6 @@ function EntityFilterMixin(mixinType)
 end
 
 function Copy(t)
-
     if type(t) == "table" then
 		return table.iduplicate(t)
     elseif type(t) == "cdata" then
@@ -58,11 +57,9 @@ function Copy(t)
         elseif t:isa("Trace") then
             return Trace(t)
         else
-            --Print("Copy(%s): Not implemented.", t:GetClassName())
             return t
         end
 	else
 		return t
     end
-
 end

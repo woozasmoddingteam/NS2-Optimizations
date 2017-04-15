@@ -185,7 +185,7 @@ if Server then
 			ray = GetTraceRayOptions()
 		}
 		data.capsule_abs, data.capsule_rel = GetTraceCapsuleOptions()
-		Server.SendNetworkMessage("trace_cache_options", data, true)
+		Server.SendNetworkMessage(client, "trace_cache_options", data, true)
 	end)
 elseif Client then
 	Event.Hook("Console_trace_cache_diff", function() Shared.Message(cacheStats()) end)

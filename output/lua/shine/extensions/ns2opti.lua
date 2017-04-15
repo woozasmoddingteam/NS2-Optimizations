@@ -1,3 +1,4 @@
+local Shine = Shine
 local Plugin = {}
 
 Plugin.DefaultState = true
@@ -71,6 +72,9 @@ function Plugin:Initialise()
 		local s = TraceCacheStatsTotal()
 		Shine:AdminPrint(nil, s)
 	end)
+
+	self.Enabled = true
+	return true
 end
 
 Shine:RegisterExtension("ns2opti", Plugin)
