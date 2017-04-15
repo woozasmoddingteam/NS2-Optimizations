@@ -1,22 +1,58 @@
-Script.Load("lua/NS2Optimizations/CacheUtility.lua")
+
+local ffi = require "ffi"
+local Vector
+Vector = ffi.metatype([[struct {
+	double x;
+	double y;
+	double z;
+}]], {
+	__add = function(l, r)
+		return Vector(l.x + r.x, l.y + r.y, l.z + r.z)
+	end,
+	__sub = function(l, r)
+		return Vector(l.x - r.x, l.y - r.y, l.z - r.z)
+	end,
+})
 
 local table_new = require "table.new"
 local max = math.max
 local abs = math.abs
 local band = bit.band
-local origin = Vector.origin
+--[=[
+	Inspired by asm.js, but tobit is actually defined for fractions: it truncates it.
+	Sad that it doesn't follow the specification.
+]=]
+local function tobit(n)
+	return n
+end
 local type = type
-local Shared_GetTime = Shared.GetTime
-local inf = math.huge
 local Vector = Vector
+local origin = Vector(0, 0, 0)
+local inf = 1/0
+assert(inf == inf)
 
-local diff = CacheUtility.VectorDiff
-local near = CacheUtility.ScalarNear
+local function diff(v1, v2)
+	return max(abs(v1.x - v2.x), abs(v1.y - v2.y), abs(v1.z - v2.z))
+end
 
-local kCacheSize        = kNS2OptiConfig.TraceCacheSize.Capsule
+local function near(a, inv_b, limit)
+	return
+		a == 0 and
+		inv_b == inf
+		or
+		a * inv_b >= (1 / (1 + limit)) and
+		a * inv_b <= (1 + limit)
+end
+
+local kCacheSize        = 4
+do
+	local n = math.log(kCacheSize) / math.log(2)
+	assert(n == math.floor(n), "kCacheSize has to be a power of two!")
+end
 if kCacheSize == 0 then
 	return
 end
+
 local kCacheElements    = 8
 local keyStart          = 0
 local keyStop           = 1
@@ -27,8 +63,8 @@ local keyTrace          = 5
 local keyInvRadius      = 6
 local keyInvHeight      = 7
 
-local kAcceptance       = kNS2OptiConfig.TraceAcceptance.Capsule.Absolute
-local kScalarAcceptance = kNS2OptiConfig.TraceAcceptance.Capsule.Relative
+local kAcceptance       = 0.1
+local kScalarAcceptance = 0.2
 
 function SetTraceCapsuleOptions(abs, rel)
 	Log("Setting acceptance for capsule to: %s, %s", abs, rel)
@@ -74,13 +110,19 @@ local function clear()
 	end
 end
 
-local old = Shared.TraceCapsule
+function Shared_GetTime()
+	return 0
+end
 
 local cache_hits   = 0
 local cache_misses = 0
 local caching_enabled = true
 
-function Shared.TraceCapsule(start, stop, radius, height, collisionRep, physicsMask, filter)
+local function old(a, b, c, d)
+	return math.random(math.floor(a.x + b.x)) * math.random(math.ceil(a.y * b.y)) / math.random(math.ceil(a.z - b.z)) + c / d * math.random()
+end
+
+function TraceCapsule(start, stop, radius, height, collisionRep, physicsMask, filter)
 	physicsMask = physicsMask or 0xFFFFFFFF
 
 	if caching_enabled then
@@ -130,7 +172,7 @@ function Shared.TraceCapsule(start, stop, radius, height, collisionRep, physicsM
 
 	if caching_enabled then
 		set(last, Vector(start), Vector(stop), 1/radius, 1/height, collisionRep, physicsMask, filter, trace)
-		last = (last + kCacheElements) % (kCacheSize * kCacheElements)
+		last = band(last + kCacheElements, kCacheSize * kCacheElements - 1)
 	end
 
 	return trace
@@ -141,3 +183,10 @@ function TraceCapsuleCacheStats()
 end
 
 clear()
+
+for i = 1, 1000 do
+	local t = TraceCapsule(Vector(2, 2, 2), Vector(3, 3, 3), 2, 5, 19)
+end
+
+print(cache_hits)
+print(cache_misses)

@@ -71,7 +71,7 @@ if kNS2OptiConfig.__Version ~= kVersion then
 -----------------------------------------------
 Your NS2Opti config was reset due to an update!
 -----------------------------------------------
-	]]
+]]
 	SaveConfigFile(kConfigFile, default_config)
 	kNS2OptiConfig = default_config
 end
@@ -122,22 +122,24 @@ local function cacheStats()
 	ray_hit,      ray_miss,      box_hit,      box_miss,      capsule_hit,      capsule_miss =
 	ray_hit_curr, ray_miss_curr, box_hit_curr, box_miss_curr, capsule_hit_curr, capsule_miss_curr
 	local small_delim = "--------"
-	local big_delim = small_delim .. small_delim
-	Log(big_delim)
-	Log("Time passed: %s", time_diff)
-	Log(small_delim)
-	Log("Box Cache hits:   %s", box_hit_diff)
-	Log("Box Cache misses: %s", box_miss_diff)
-	Log("Box Cache hit percentage: %s%%", 100 * box_hit_diff / (box_hit_diff + box_miss_diff))
-	Log(small_delim)
-	Log("Capsule Cache hits:   %s", capsule_hit_diff)
-	Log("Capsule Cache misses: %s", capsule_miss_diff)
-	Log("Capsule Cache hit percentage: %s%%", 100 * capsule_hit_diff / (capsule_hit_diff + capsule_miss_diff))
-	Log(small_delim)
-	Log("Ray Cache hits:   %s", ray_hit_diff)
-	Log("Ray Cache misses: %s", ray_miss_diff)
-	Log("Ray Cache hit percentage: %s%%", 100 * ray_hit_diff / (ray_hit_diff + ray_miss_diff))
-	Log(big_delim)
+	local big_delim = small_delim .. small_delim .. "\n"
+	small_delim = small_delim .. "\n"
+	local s = "\n" .. big_delim
+	s = s .. "Time passed: " .. time_diff .. "\n"
+	s = s .. small_delim
+	s = s .. "Box Cache hits:   " .. box_hit_diff .. "\n"
+	s = s .. "Box Cache misses: " .. box_miss_diff .. "\n"
+	s = s .. "Box Cache hit percentage: " .. 100 * box_hit_diff / (box_hit_diff + box_miss_diff) .. "%\n"
+	s = s .. small_delim
+	s = s .. "Capsule Cache hits:   " .. capsule_hit_diff .. "\n"
+	s = s .. "Capsule Cache misses: " .. capsule_miss_diff .. "\n"
+	s = s .. "Capsule Cache hit percentage: " .. 100 * capsule_hit_diff / (capsule_hit_diff + capsule_miss_diff) .. "%\n"
+	s = s .. small_delim
+	s = s .. "Ray Cache hits:   " .. ray_hit_diff .. "\n"
+	s = s .. "Ray Cache misses: " .. ray_miss_diff .. "\n"
+	s = s .. "Ray Cache hit percentage: " .. 100 * ray_hit_diff / (ray_hit_diff + ray_miss_diff) .. "%\n"
+	s = s .. big_delim
+	return s
 end
 
 local function maybe(f)
@@ -149,31 +151,34 @@ local function maybe(f)
 end
 
 local function cacheStatsTotal()
-	local ray_hit_curr, ray_miss_curr = maybe(TraceRayCacheStats)
-	local box_hit_curr, box_miss_curr = maybe(TraceBoxCacheStats)
-	local capsule_hit_curr, capsule_miss_curr = maybe(TraceCapsuleCacheStats)
+	local ray_hit_diff, ray_miss_diff = maybe(TraceRayCacheStats)
+	local box_hit_diff, box_miss_diff = maybe(TraceBoxCacheStats)
+	local capsule_hit_diff, capsule_miss_diff = maybe(TraceCapsuleCacheStats)
 	local small_delim = "--------"
-	local big_delim = small_delim .. small_delim
-	Log(big_delim)
-	Log("Time passed: %s", Shared.GetTime())
-	Log(small_delim)
-	Log("Box Cache hits:   %s", box_hit_curr)
-	Log("Box Cache misses: %s", box_miss_curr)
-	Log("Box Cache hit percentage: %s%%", 100 * box_hit_curr / (box_hit_curr + box_miss_curr))
-	Log(small_delim)
-	Log("Capsule Cache hits:   %s", capsule_hit_curr)
-	Log("Capsule Cache misses: %s", capsule_miss_curr)
-	Log("Capsule Cache hit percentage: %s%%", 100 * capsule_hit_curr / (capsule_hit_curr + capsule_miss_curr))
-	Log(small_delim)
-	Log("Ray Cache hits:   %s", ray_hit_curr)
-	Log("Ray Cache misses: %s", ray_miss_curr)
-	Log("Ray Cache hit percentage: %s%%", 100 * ray_hit_curr / (ray_hit_curr + ray_miss_curr))
-	Log(big_delim)
+	local big_delim = small_delim .. small_delim .. "\n"
+	small_delim = small_delim .. "\n"
+	local s = "\n" .. big_delim
+	s = s .. "Time passed: " .. Shared.GetTime() .. "\n"
+	s = s .. small_delim
+	s = s .. "Box Cache hits:   " .. box_hit_diff .. "\n"
+	s = s .. "Box Cache misses: " .. box_miss_diff .. "\n"
+	s = s .. "Box Cache hit percentage: " .. 100 * box_hit_diff / (box_hit_diff + box_miss_diff) .. "%\n"
+	s = s .. small_delim
+	s = s .. "Capsule Cache hits:   " .. capsule_hit_diff .. "\n"
+	s = s .. "Capsule Cache misses: " .. capsule_miss_diff .. "\n"
+	s = s .. "Capsule Cache hit percentage: " .. 100 * capsule_hit_diff / (capsule_hit_diff + capsule_miss_diff) .. "%\n"
+	s = s .. small_delim
+	s = s .. "Ray Cache hits:   " .. ray_hit_diff .. "\n"
+	s = s .. "Ray Cache misses: " .. ray_miss_diff .. "\n"
+	s = s .. "Ray Cache hit percentage: " .. 100 * ray_hit_diff / (ray_hit_diff + ray_miss_diff) .. "%\n"
+	s = s .. big_delim
+	return s
 end
 
+_G.TraceCacheStatsTotal = cacheStatsTotal
+_G.TraceCacheStatsDiff  = cacheStats
+
 if Server then
-	Event.Hook("Console_sv_trace_cache_diff", cacheStats)
-	Event.Hook("Console_sv_trace_cache_total", cacheStatsTotal)
 	Event.Hook("ClientConnect", function(client)
 		local data = {
 			box = GetTraceBoxOptions(),
@@ -182,12 +187,34 @@ if Server then
 		data.capsule_abs, data.capsule_rel = GetTraceCapsuleOptions()
 		Server.SendNetworkMessage("trace_cache_options", data, true)
 	end)
-else
-	Event.Hook("Console_trace_cache_diff", cacheStats)
-	Event.Hook("Console_trace_cache_total", cacheStatsTotal)
+elseif Client then
+	Event.Hook("Console_trace_cache_diff", function() Shared.Message(cacheStats()) end)
+	Event.Hook("Console_trace_cache_total", function() Shared.Message(cacheStatsTotal()) end)
+	if SetTraceRayOptions then
+		Event.Hook("Console_trace_ray_options", SetTraceRayOptions)
+	end
+	if SetTraceBoxOptions then
+		Event.Hook("Console_trace_box_options", SetTraceBoxOptions)
+	end
+	if SetTraceCapsuleOptions then
+		Event.Hook("Console_trace_capsule_options", SetTraceCapsuleOptions)
+	end
 	Client.HookNetworkMessage("trace_cache_options", function(data)
-		SetTraceRayOptions(data.ray)
-		SetTraceBoxOptions(data.box)
-		SetTraceCapsuleOptions(data.capsule_abs, data.capsule_rel)
+		if SetTraceRayOptions then SetTraceRayOptions(data.ray) end
+		if SetTraceBoxOptions then SetTraceBoxOptions(data.box) end
+		if SetTraceCapsuleOptions then SetTraceCapsuleOptions(data.capsule_abs, data.capsule_rel) end
+	end)
+	local tracer      = dofile "lua/NS2Optimizations/Tracer.lua"
+	Event.Hook("Console_test_trace", function()
+		do return end
+		Log("Here! %s", tracelogger)
+		local p = Client.GetLocalPlayer()
+		local start = p:GetOrigin()
+		local stop  = start + 10
+		tracer.start("config://traces.txt")
+		for i = 1, 1000 do
+			local t = Shared.TraceRay(start, stop, CollisionRep.Default)
+		end
+		tracer.stop()
 	end)
 end

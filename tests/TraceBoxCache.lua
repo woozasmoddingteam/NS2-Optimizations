@@ -1,22 +1,49 @@
-Script.Load("lua/NS2Optimizations/CacheUtility.lua")
+local ffi = require "ffi"
+local Vector
+Vector = ffi.metatype([[struct {
+	double x;
+	double y;
+	double z;
+}]], {
+	__add = function(l, r)
+		return Vector(l.x + r.x, l.y + r.y, l.z + r.z)
+	end,
+	__sub = function(l, r)
+		return Vector(l.x - r.x, l.y - r.y, l.z - r.z)
+	end,
+})
 
 local table_new = require "table.new"
 local max = math.max
 local abs = math.abs
 local band = bit.band
-local type = type
-local Shared_GetTime = Shared.GetTime
-local inf = math.huge
-local Vector = Vector
-local origin = Vector.origin
+--[=[
+	Inspired by asm.js, but tobit is actually defined for fractions: it truncates it.
+	Sad that it doesn't follow the specification.
+]=]
 local function tobit(n)
 	return n
 end
+local type = type
+local Vector = Vector
+local origin = Vector(0, 0, 0)
+local inf = 1/0
+assert(inf == inf)
 
-local diff = CacheUtility.VectorDiff
-local near = CacheUtility.ScalarNear
+local function diff(v1, v2)
+	return max(abs(v1.x - v2.x), abs(v1.y - v2.y), abs(v1.z - v2.z))
+end
 
-local kCacheSize        = kNS2OptiConfig.TraceCacheSize.Box
+local function near(a, inv_b, limit)
+	return
+		a == 0 and
+		inv_b == inf
+		or
+		a * inv_b >= (1 / (1 + limit)) and
+		a * inv_b <= (1 + limit)
+end
+
+local kCacheSize        = 4
 do
 	local n = math.log(kCacheSize) / math.log(2)
 	assert(n == math.floor(n), "kCacheSize has to be a power of two!")
@@ -33,7 +60,7 @@ local keyFilter         = 4
 local keyTrace          = 5
 local keyExtents        = 6
 
-local kAcceptance       = kNS2OptiConfig.TraceAcceptance.Box.Absolute
+local kAcceptance       = 0.1
 
 function SetTraceBoxOptions(abs)
 	Log("Setting acceptance for box to: %s", abs)
@@ -49,15 +76,6 @@ local prev_time
 local last = 0
 
 local function set(i, extents, start, stop, collisionRep, physicsMask, filter, trace)
-	--[=[
-	assert(extents:isa "Vector")
-	assert(start:isa "Vector")
-	assert(stop:isa "Vector")
-	assert(type(collisionRep) == "number")
-	assert(type(physicsMask) == "number")
-	assert(type(filter) == "function" or filter == nil)
-	assert(trace == nil or type(trace) == "cdata")
-	--]=]
 	cache[i+keyStart]        = start
 	cache[i+keyStop]         = stop
 	cache[i+keyCollisionRep] = collisionRep
@@ -77,6 +95,20 @@ local function clear()
 	end
 end
 
+function Shared_GetTime()
+	return 0
+end
+
+math.randomseed(os.clock())
+
+local function old(x, a, b, c, d)
+	return x.x / math.random(math.floor(a.x + b.x)) * math.random(math.ceil(a.y * b.y)) / math.random(math.ceil(a.z - b.z)) + c / d * math.random() * x.y - x.z
+end
+
+local cache_hits   = 0
+local cache_misses = 0
+local caching_enabled = true
+
 local function checkMatch(i, extents, start, stop, collisionRep, physicsMask, filter)
 	i = tobit(i)
 	return
@@ -87,13 +119,8 @@ local function checkMatch(i, extents, start, stop, collisionRep, physicsMask, fi
 		diff(start, cache[i+keyStart])     < kAcceptance and
 		diff(stop, cache[i+keyStop])       < kAcceptance
 end
-local old = Shared.TraceBox
 
-local cache_hits   = 0
-local cache_misses = 0
-local caching_enabled = true
-
-function Shared.TraceBox(extents, start, stop, collisionRep, physicsMask, filter)
+function TraceBox(extents, start, stop, collisionRep, physicsMask, filter)
 	physicsMask = physicsMask or 0xFFFFFFFF
 
 	if caching_enabled then
@@ -140,3 +167,10 @@ function TraceBoxCacheStats()
 end
 
 clear()
+
+for i = 1, 1000 do
+	local t = TraceBox(Vector(5, 5, 5), Vector(2, 2, 2), Vector(3, 3, 3), 2)
+end
+
+print(cache_hits)
+print(cache_misses)

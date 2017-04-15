@@ -1,20 +1,41 @@
-Script.Load("lua/NS2Optimizations/CacheUtility.lua")
-
+local ffi = require "ffi"
+local Vector
+Vector = ffi.metatype([[struct {
+	double x;
+	double y;
+	double z;
+}]], {
+	__add = function(l, r)
+		return Vector(l.x + r.x, l.y + r.y, l.z + r.z)
+	end,
+	__sub = function(l, r)
+		return Vector(l.x - r.x, l.y - r.y, l.z - r.z)
+	end,
+})
 local table_new = require "table.new"
-local max = math.max
-local abs = math.abs
-local band = bit.band
-local origin = Vector.origin
-local type = type
-local Shared_GetTime = Shared.GetTime
-local Vector = Vector
+
+--[=[
+	Inspired by asm.js, but tobit is actually defined for fractions: it truncates it.
+	Sad that it doesn't follow the specification.
+]=]
 local function tobit(n)
 	return n
 end
+local max = math.max
+local abs = math.abs
+local band = bit.band
+local origin = Vector(0, 0, 0)
+local type = type
+local abs = math.abs
+local max = math.max
+local inf = 1/0
+assert(inf == inf)
 
-local diff = CacheUtility.VectorDiff
+local function diff(v1, v2)
+	return max(abs(v1.x - v2.x), abs(v1.y - v2.y), abs(v1.z - v2.z))
+end
 
-local kCacheSize      = kNS2OptiConfig.TraceCacheSize.Ray
+local kCacheSize      = 4
 do
 	local n = math.log(kCacheSize) / math.log(2)
 	assert(n == math.floor(n), "kCacheSize has to be a power of two!")
@@ -30,26 +51,18 @@ local keyPhysicsMask  = 3
 local keyFilter       = 4
 local keyTrace        = 5
 
-local kAcceptance       = kNS2OptiConfig.TraceAcceptance.Ray.Absolute
-
-function SetTraceRayOptions(abs)
-	Log("Setting acceptance for ray to: %s", abs)
-	kAcceptance = tonumber(abs)
-end
-
-function GetTraceRayOptions()
-	return kAcceptance
-end
+local kAcceptance       = 0.1
 
 local cache = table_new(kCacheSize*kCacheElements, 0)
 local prev_time
 local last = 0
 
 local function set(i, start, stop, collisionRep, physicsMask, filter, trace)
+	i = tobit(i)
 	cache[i+keyStart]        = start
 	cache[i+keyStop]         = stop
-	cache[i+keyCollisionRep] = collisionRep
-	cache[i+keyPhysicsMask]  = physicsMask
+	cache[i+keyCollisionRep] = tobit(collisionRep)
+	cache[i+keyPhysicsMask]  = tobit(physicsMask)
 	cache[i+keyFilter]       = filter
 	cache[i+keyTrace]        = trace
 end
@@ -64,8 +77,15 @@ local function clear()
 	end
 end
 
-local old = Shared.TraceRay
-Shared.OriginalTraceRay = old
+function Shared_GetTime()
+	return 0
+end
+
+math.randomseed(os.clock())
+
+local function old(a, b, c, d)
+	return math.random(math.floor(a.x + b.x)) * math.random(math.ceil(a.y * b.y)) / math.random(math.ceil(a.z - b.z)) + c / d * math.random()
+end
 
 local cache_hits   = 0
 local cache_misses = 0
@@ -81,7 +101,7 @@ local function checkMatch(i, start, stop, collisionRep, physicsMask, filter)
 		diff(stop, cache[i+keyStop])   < kAcceptance
 end
 
-function Shared.TraceRay(start, stop, collisionRep, physicsMask, filter)
+function TraceRay(start, stop, collisionRep, physicsMask, filter)
 	if type(physicsMask) ~= "number" then
 		filter = physicsMask
 		physicsMask = 0xFFFFFFFF
@@ -96,6 +116,7 @@ function Shared.TraceRay(start, stop, collisionRep, physicsMask, filter)
 			goto new_trace
 		end
 		local i = 0
+		---[==[
 		::loop::
 		if checkMatch(i, start, stop, collisionRep, physicsMask, filter) then
 			cache_hits = tobit(cache_hits) + 1
@@ -136,3 +157,10 @@ function TraceRayCacheStats()
 end
 
 clear()
+
+for i = 1, 1000 do
+	local t = TraceRay(Vector(2, 2, 2), Vector(3, 3, 3), 2)
+end
+
+print(cache_hits)
+print(cache_misses)

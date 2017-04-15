@@ -181,7 +181,7 @@ function Observatory:PerformDistressBeacon()
 		local player = to_beacon[i]
 
 		if HasMixin(player, "SmoothedRelevancy") then
-         player:StartSmoothedRelevancy(spawnPoints[i])
+			player:StartSmoothedRelevancy(spawnPoints[i])
 		end
 		player:SetOrigin(spawnPoints[i])
 		player:TriggerBeaconEffects()
