@@ -64,17 +64,26 @@ Shared.RegisterNetworkMessage("trace_cache_options", {
 	capsule_rel = "float"
 })
 
+local function applyDefault(a, b)
+	for k, v in pairs(b) do
+		if a[k] == nil then
+			a[k] = v
+		end
+	end
+end
+
 local kConfigFile = Server and "NS2OptiServer.json" or "NS2OptiClient.json"
 kNS2OptiConfig = LoadConfigFile(kConfigFile, default_config)
+applyDefault(kNS2OptiConfig, default_config);
 if kNS2OptiConfig.__Version ~= kVersion then
 	Shared.Message [[
 -----------------------------------------------
 Your NS2Opti config was reset due to an update!
 -----------------------------------------------
 ]]
-	SaveConfigFile(kConfigFile, default_config)
 	kNS2OptiConfig = default_config
 end
+SaveConfigFile(kConfigFile, kNS2OptiConfig)
 
 kRelevantToAll = 0x8000000
 
