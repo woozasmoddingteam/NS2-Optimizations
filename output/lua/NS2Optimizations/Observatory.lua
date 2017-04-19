@@ -168,7 +168,7 @@ function Observatory:PerformDistressBeacon()
 
 	local distressOrigin = self:GetDistressOrigin()
 	if not distressOrigin then
-		return false
+		return
 	end
 
 	local to_beacon = GetPlayersToBeacon(self)
@@ -176,6 +176,10 @@ function Observatory:PerformDistressBeacon()
 	Shared.Message("Found " .. #to_beacon .. " players to beacon")
 
 	local spawnPoints = GetBeaconPointsForTechPoint(self:GetCommandStation().attachedId)
+	
+	if not spawnPoints then
+		return
+	end
 
 	for i = 1, #to_beacon do
 		local player = to_beacon[i]
