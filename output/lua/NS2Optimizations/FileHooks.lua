@@ -113,6 +113,9 @@ end
 ModLoader.SetupFileHook("lua/MixinUtility.lua", "lua/NS2Optimizations/MixinUtility.lua", "replace")
 ModLoader.SetupFileHook("lua/MixinDispatcherBuilder.lua", "", "halt")
 
+ModLoader.SetupFileHook("lua/TechData.lua", "lua/NS2Optimizations/TechData_Late.lua", "post")
+ModLoader.SetupFileHook("lua/TechTreeConstants.lua", "lua/NS2Optimizations/TechTreeConstants.lua", "post")
+
 local ray_hit, ray_miss, box_hit, box_miss, capsule_hit, capsule_miss = 0, 0, 0, 0, 0, 0
 local time = 0
 
