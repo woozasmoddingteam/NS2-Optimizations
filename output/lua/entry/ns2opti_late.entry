@@ -1,5 +1,5 @@
 modEntry = {
-	Shared = "lua/NS2Optimizations/Shared.lua",
+	Shared = "lua/NS2Optimizations/Shared_Late.lua",
 	FileHooks = "lua/NS2Optimizations/FileHooks_Late.lua",
 	Priority = -1000
 }

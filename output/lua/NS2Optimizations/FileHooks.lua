@@ -30,8 +30,9 @@ local default_config = Server and {
 			Relative = 0.2
 		}
 	},
-	InfinitePlayerRelevancy = false,
-	UnsafeTableOptimizations = false,
+	InfinitePlayerRelevancy   = false,
+	UnsafeTableOptimizations  = false,
+	UnsafeTechIdOptimizations = false,
 	FastMixin = true,
 	__Version = kVersion
 } or {
@@ -52,7 +53,8 @@ local default_config = Server and {
 			Relative = 0.2
 		}
 	},
-	UnsafeTableOptimizations = false,
+	UnsafeTableOptimizations  = false,
+	UnsafeTechIdOptimizations = false,
 	FastMixin = true,
 	__Version = kVersion
 }
@@ -113,7 +115,6 @@ end
 ModLoader.SetupFileHook("lua/MixinUtility.lua", "lua/NS2Optimizations/MixinUtility.lua", "replace")
 ModLoader.SetupFileHook("lua/MixinDispatcherBuilder.lua", "", "halt")
 
-ModLoader.SetupFileHook("lua/TechData.lua", "lua/NS2Optimizations/TechData_Late.lua", "post")
 ModLoader.SetupFileHook("lua/TechTreeConstants.lua", "lua/NS2Optimizations/TechTreeConstants.lua", "post")
 
 local ray_hit, ray_miss, box_hit, box_miss, capsule_hit, capsule_miss = 0, 0, 0, 0, 0, 0

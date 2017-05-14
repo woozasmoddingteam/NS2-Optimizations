@@ -30,7 +30,8 @@ function DetectMixins(cls)
 		local info = debug.getinfo(cls.OnCreate)
 		local args = ""
 		if info.isvararg then
-			args = "..."
+			args = ",..."
+			Log("%s.OnCreate is var arg!", meta.name);
 		else
 			for i = 1, info.nparams-1 do
 				args = args .. ", arg" .. i
@@ -63,7 +64,8 @@ function DetectMixins(cls)
 		local info = debug.getinfo(cls.OnInitialized)
 		local args = ""
 		if info.isvararg then
-			args = "..."
+			args = ",..."
+			Log("%s.OnInitialized is var arg!", meta.name);
 		else
 			for i = 1, info.nparams-1 do
 				args = args .. ", arg" .. i

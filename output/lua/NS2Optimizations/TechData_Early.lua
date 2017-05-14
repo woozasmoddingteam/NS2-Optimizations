@@ -69,3 +69,25 @@ kTechDataSupply                   = 67
 kTechDataSpawnBlock               = 68
 kTechDataBioMass                  = 69
 kTechDataShowOrderLine            = 70
+
+if kNS2OptiConfig.UnsafeTechIdOptimizations then
+	local actual = LookupTechId
+	function LookupTechId(x, y)
+		return actual(x, y)
+	end
+	_G.LookupTechId_NS2Opti = LookupTechId
+end
+
+local actual = LookupTechData
+function LookupTechData(x, y, z)
+	return actual(x, y, z)
+end
+_G.LookupTechData_NS2Opti = LookupTechData
+
+local actual = GetTechForCategory
+function GetTechForCategory(x)
+	return actual(x)
+end
+_G.GetTechForCategory_NS2Opti = GetTechForCategory
+
+Log "Loaded TechData_Early.lua!"
