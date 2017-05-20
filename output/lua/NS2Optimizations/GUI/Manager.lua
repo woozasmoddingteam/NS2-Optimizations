@@ -1,12 +1,3 @@
--- ======= Copyright (c) 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
---
--- lua\GUIManager.lua
---
--- Created by: Brian Cronin (brianc@unknownworlds.com)
---
--- ========= For more information, visit us at http://www.unknownworlds.com =====================
-
--- Client only.
 assert(Server == nil)
 
 Script.Load("lua/UtilityShared.lua")
