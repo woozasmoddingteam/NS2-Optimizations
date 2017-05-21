@@ -27,8 +27,6 @@ local table_insert = table.insert
 
 function EntityListToTable(entityList)
 
-    PROFILE("EntityListToTable")
-
 	local result = {}
 
 	local index = 1;
@@ -44,8 +42,6 @@ end
 local table_insert = table.insert
 
 function GetEntitiesWithFilter(entityList, filterFunction)
-
-    PROFILE("Entity:GetEntitiesWithFilter")
 
     local numEntities = entityList:GetSize()
     local result = {}
@@ -128,8 +124,6 @@ end
 
 
 function GetEntitiesWithinRange(className, origin, range)
-
-    PROFILE("Entity:GetEntitiesWithinRange")
 
     return Shared_GetEntitiesWithTagInRange("class:" .. className, origin, range)
 
