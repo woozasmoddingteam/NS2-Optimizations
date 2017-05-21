@@ -375,3 +375,34 @@ function table.removeConditional(t, filter)
 	 end
 
 end
+
+do
+	local old = unpack
+	oldunpack = old
+	local unpack_table = {}
+	for diff = 0, 19 do
+		ret = ""
+		for i = 0, diff do
+			ret = ret .. "t[i+" .. i .. "],"
+		end
+		ret = ret:sub(1, #ret-1)
+		local s = ([[
+			return function(t, i)
+				return %s
+			end
+		]]):format(ret)
+		unpack_table[diff] =
+			assert(loadstring(s))()
+	end
+	function unpack(t, i, j)
+		if i == nil then i = 1  end
+		if j == nil then j = #t end
+		local diff = j-i
+		if     diff < 0  then
+		elseif diff < 20 then
+			return unpack_table[diff](t, i)
+		else
+			return old(t, i, j)
+		end
+	end
+end
