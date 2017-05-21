@@ -76,46 +76,45 @@ end
 
 local kConfigFile = Server and "NS2OptiServer.json" or "NS2OptiClient.json"
 kNS2OptiConfig = LoadConfigFile(kConfigFile, default_config)
-applyDefault(kNS2OptiConfig, default_config);
 if kNS2OptiConfig.__Version ~= kVersion then
 	Shared.Message [[
 -----------------------------------------------
-Your NS2Opti config was reset due to an update!
+NS2 Optimizations has been updated!
 -----------------------------------------------
 ]]
 	kNS2OptiConfig = default_config
 end
+applyDefault(kNS2OptiConfig, default_config);
 SaveConfigFile(kConfigFile, kNS2OptiConfig)
 
 kRelevantToAll = 0x8000000
 
 Script.Load "lua/NS2Optimizations/Table.lua"
-Script.Load "lua/NS2Optimizations/Utility.lua"
-Script.Load "lua/NS2Optimizations/FastMixin.lua"
 
-if Shared then
-	Script.Load "lua/NS2Optimizations/TraceRayCache.lua"
-	Script.Load "lua/NS2Optimizations/TraceCapsuleCache.lua"
-	Script.Load "lua/NS2Optimizations/TraceBoxCache.lua"
-end
-
-ModLoader.SetupFileHook("lua/Mixins/BaseModelMixin.lua", "lua/NS2Optimizations/BaseModelMixin.lua", "post")
-ModLoader.SetupFileHook("lua/ScoringMixin.lua", "lua/NS2Optimizations/ScoringMixin.lua", "post")
+Script.Load "lua/NS2Optimizations/Closures/Utility.lua"
 ModLoader.SetupFileHook("lua/Entity.lua", "lua/NS2Optimizations/Entity.lua", "post")
 
-ModLoader.SetupFileHook("lua/Observatory.lua",              "lua/NS2Optimizations/Observatory.lua", "post")
-ModLoader.SetupFileHook("lua/BalanceMisc.lua",              "lua/NS2Optimizations/BalanceMisc.lua", "post")
-
-if Server then
-	ModLoader.SetupFileHook("lua/LOSMixin.lua",              "lua/NS2Optimizations/LOSMixin_Server.lua", "post")
-	ModLoader.SetupFileHook("lua/Gamerules.lua",             "lua/NS2Optimizations/Gamerules_Server.lua", "post")
-	ModLoader.SetupFileHook("lua/Player.lua",                "lua/NS2Optimizations/Player_Server.lua", "post")
+if Shared then
+	Script.Load "lua/NS2Optimizations/TraceCaching/TraceRayCache.lua"
+	Script.Load "lua/NS2Optimizations/TraceCaching/TraceCapsuleCache.lua"
+	Script.Load "lua/NS2Optimizations/TraceCaching/TraceBoxCache.lua"
 end
 
+Script.Load "lua/NS2Optimizations/FastMixin/init.lua"
 ModLoader.SetupFileHook("lua/MixinUtility.lua", "lua/NS2Optimizations/MixinUtility.lua", "replace")
 ModLoader.SetupFileHook("lua/MixinDispatcherBuilder.lua", "", "halt")
+ModLoader.SetupFileHook("lua/Mixins/BaseModelMixin.lua", "lua/NS2Optimizations/FastMixin/BaseModelMixin.lua", "post")
+ModLoader.SetupFileHook("lua/ScoringMixin.lua", "lua/NS2Optimizations/FastMixin/ScoringMixin.lua", "post")
 
-ModLoader.SetupFileHook("lua/TechTreeConstants.lua", "lua/NS2Optimizations/TechTreeConstants.lua", "post")
+ModLoader.SetupFileHook("lua/Observatory.lua",              "lua/NS2Optimizations/SmartRelevancy/Observatory.lua", "post")
+ModLoader.SetupFileHook("lua/BalanceMisc.lua",              "lua/NS2Optimizations/SmartRelevancy/BalanceMisc.lua", "post")
+if Server then
+	ModLoader.SetupFileHook("lua/LOSMixin.lua",              "lua/NS2Optimizations/SmartRelevancy/LOSMixin_Server.lua", "post")
+	ModLoader.SetupFileHook("lua/Gamerules.lua",             "lua/NS2Optimizations/SmartRelevancy/Gamerules_Server.lua", "post")
+	ModLoader.SetupFileHook("lua/Player.lua",                "lua/NS2Optimizations/SmartRelevancy/Player_Server.lua", "post")
+end
+
+ModLoader.SetupFileHook("lua/TechTreeConstants.lua", "lua/NS2Optimizations/Tech/TechTreeConstants.lua", "post")
 
 local ray_hit, ray_miss, box_hit, box_miss, capsule_hit, capsule_miss = 0, 0, 0, 0, 0, 0
 local time = 0

@@ -1,4 +1,4 @@
-dofile "../output/lua/GeneralOpti/Closure.lua"
+dofile "../output/lua/NS2Optimizations/Closure.lua"
 
 local clock = os.clock
 
