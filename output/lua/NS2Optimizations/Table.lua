@@ -7,8 +7,8 @@ local random = math.random
 local max = math.max
 local floor = math.floor
 local ceil = math.ceil
-local print = Shared.Message or print
-local kEnableUnsafe = kNS2OptiConfig.UnsafeTableOptimizations
+local print = Shared and Shared.Message or print
+local kEnableUnsafe = kNS2OptiConfig and kNS2OptiConfig.UnsafeTableOptimizations or true
 
 local elementEqualsElement
 
