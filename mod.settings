@@ -1,10 +1,6 @@
-name        = "NS2 Optimizations - Beta"
+name        = "NS2 Optimizations - Dev version (highly experimental)"
 source_dir  = "source"
 output_dir  = "output"
-description = [=[NS2 Optimizations - Beta
-
-modid: 352aef48]=]
 image       = "preview.jpg"
 tag_modtype = ""
 tag_support = "Must be run on Server"
-publish_id = "352aef48"
