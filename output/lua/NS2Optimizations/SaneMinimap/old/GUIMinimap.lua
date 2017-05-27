@@ -11,17 +11,19 @@
 Script.Load("lua/GUIMinimapConnection.lua")
 Script.Load("lua/MinimapMappableMixin.lua")
 
+local Shared = Shared
+local Client = Client
+local table_insert = table.insert
+local table_remove = table.remove
+
 class 'GUIMinimap' (GUIScript)
 
--- activity is rechecked with this intervals, immobile blips will be updated at this interval too
-local kActivityUpdateInterval							= 0.5
-
- -- how often we update for each activity level
+-- how often we update for each activity level
 local kBlipActivityUpdateInterval						= {}
-kBlipActivityUpdateInterval[kMinimapActivity.Static]	= kActivityUpdateInterval
-kBlipActivityUpdateInterval[kMinimapActivity.Low]		= 0.2
-kBlipActivityUpdateInterval[kMinimapActivity.Medium]	= 0.05
-kBlipActivityUpdateInterval[kMinimapActivity.High]		= 0.001
+kBlipActivityUpdateInterval[kMinimapActivity.Static]	= -1
+kBlipActivityUpdateInterval[kMinimapActivity.Low]		= 0
+kBlipActivityUpdateInterval[kMinimapActivity.Medium]	= 4
+kBlipActivityUpdateInterval[kMinimapActivity.High]		= 9
 
 -- allow update rate to be controlled by console (minimap_rate). 0 = full rate
 GUIMinimap.kUpdateIntervalMultipler						= 1
@@ -149,7 +151,18 @@ kBlipInfo[kMinimapBlipType.EtherealGate]				= { kBlipColorType.EtherealGate, kBl
 kBlipInfo[kMinimapBlipType.HighlightWorld]				= { kBlipColorType.HighlightWorld, kBlipSizeType.HighlightWorld, kBackgroundBlipsLayer }
 kBlipInfo[kMinimapBlipType.BoneWall]					= { kBlipColorType.FullColor, kBlipSizeType.BoneWall, kBackgroundBlipsLayer }
 
+local keyIcon         = newproxy()
+local icons   = {}
+for i = 1, #primary_table do
+	icons[i]   = {i = 1}
+end
+
 local kClassToGrid = BuildClassToGrid()
+
+local instance
+function GetMinimap()
+	return instance
+end
 
 GUIMinimap.kBackgroundWidth = GUIScale(300)
 GUIMinimap.kBackgroundHeight = GUIMinimap.kBackgroundWidth
@@ -199,20 +212,9 @@ function GUIMinimap:OnResolutionChanged(oldX, oldY, newX, newY)
 	UpdateItemsGUIScale(self)
 end
 
-do
-	local keys = {"Static", "Low", "Medium", "High"}
-	local function ResetStaticBlipData(self)
-		for i = 1, #keys do
-			local k = keys[i]
-			self.staticBlipData[k] = self.staticBlipData[k] or {}
-			self.staticBlipData[k].blipIds = {}
-			self.staticBlipData[k].count = 0
-			self.staticBlipData[k].workIndex = 1
-		end
-	end
-end
-
 function GUIMinimap:Initialize()
+	assert(not instance)
+	instance = self
 	
 	-- we update the minimap at full rate, but internally we spread out the
 	-- actual load of updating the map so we only do a little bit of work each frame
@@ -221,24 +223,13 @@ function GUIMinimap:Initialize()
 	self.nextMiscUpdateInterval = 0
 	self.nextActivityUpdateTime = 0
   
-	self.staticBlipData = {}
-	self.iconMap = {}
-	self.freeIcons = {}
-	self.localBlips = {}
-	
-	ResetStaticBlipData(self)
-	
 	local player = Client.GetLocalPlayer()
 	self.showPlayerNames = false
 	self.spectating = false
 	self.clientIndex = player:GetClientIndex()
-	-- infinite radius; set to > 0 for marine HUD; stops processing blips at > radius
-	self.updateRadius = 0 
-	self.updateRadiusSquared = 0
 	-- individual update rate multiplier. Set to run at full rate (all intervals are multipled by zero). Set to 1 to run 
 	-- at CPU saving rate
 	self.updateIntervalMultipler = 0
-	self.nameTagMap = {}
 	-- the rest is untouched in rewrite
   
 	self.locationItems = { }
@@ -599,59 +590,55 @@ local function CreateNewNameTag(self)
 	return nameTag
 end
 
--- reuse nametags if they have not been used lately
-local kNameTagReuseTimeout = 0.2
+local GetFreeNameTag, HideUnusedNameTags, GetNameTag
+do
+	local usedNameTags = {}
+	local freeNameTags = {}
+	local keyTag       = newproxy()
 
-local function GetFreeNameTag(self, clientIndex)
+	function GetFreeNameTag(self, blip)
+		local tag = table_remove(freeNameTags)
 
-	local now = Shared.GetTime()
-	local nameTag = nil
-	for _,v in pairs(self.nameTagMap) do
-		if now - v.lastUsed > kNameTagReuseTimeout then
-			nameTag = v
-			self.nameTagMap[nameTag.clientIndex] = nil
-			break
+		if not tag then
+			tag = CreateNewNameTag(self)
+			tag.blip = clientIndex
+			table_insert(nameTags, tag)
 		end
-	end
-	if nameTag == nil then
-		nameTag = CreateNewNameTag(self)
-	end
-	nameTag.clientIndex = clientIndex
-	self.nameTagMap[clientIndex] = nameTag
-	return nameTag
-end
 
-local function HideUnusedNameTags(self)
-	local now = Shared.GetTime()
-	local nameTag = nil
-	for _,v in pairs(self.nameTagMap) do
-		if now - v.lastUsed > kNameTagReuseTimeout then
-			v:SetIsVisible(false)
+		blip[keyTag] = tag
+		return tag
+	end
+
+	function HideUnusedNameTags(self)
+		local now = Shared.GetTime()
+		local nameTag = nil
+		for _,v in pairs(self.nameTagMap) do
+			if now - v.lastUsed > kNameTagReuseTimeout then
+				v:SetIsVisible(false)
+			end
 		end
+		
 	end
-	
-end
 
--- Get the nameTag guiItem for the client
-local function GetNameTag(self, clientIndex)
-	local nameTag = self.nameTagMap[clientIndex]
-	
-	if not nameTag then
-		nameTag = GetFreeNameTag(self, clientIndex)
+	-- Get the nameTag guiItem for the client
+	function GetNameTag(self, clientIndex)
+		local nameTag = self.nameTagMap[clientIndex]
+		
+		if not nameTag then
+			nameTag = GetFreeNameTag(self, clientIndex)
+		end
+		
+		return nameTag
+		
 	end
-	
-	return nameTag
-	
 end
 
 local namePos = Vector(0, 0, 0)
-function GUIMinimap:DrawMinimapName(item, blipTeam, clientIndex, isParasited)
+function GUIMinimap:DrawMinimapName(item, mapBlip)
   
-	local drawName = self.spectating or MinimapMappableMixin.OnSameMinimapBlipTeam(self.playerTeam, blipTeam)
-	
-	if drawName and self.showPlayerNames and clientIndex > 0 then
+	if self.showPlayerNames and clientIndex > 0 and (self.spectating or mapBlip.team == Client.GetLocalPlayer():GetTeamNumber()) then
 		
-		local record = Scoreboard_GetPlayerRecord( clientIndex )			
+		local record = Scoreboard_GetPlayerRecord(clientIndex)
 
 		if record and record.Name then
 		  
@@ -682,111 +669,70 @@ function GUIMinimap:DrawMinimapName(item, blipTeam, clientIndex, isParasited)
 	end
 
 end
-		 
 
-local function CreateIcon(self)
+local CreateIcon, CreateIconForKey, FreeIcon
+do
+	local freeIcons = {}
 
-	local icon = table.remove(self.freeIcons)
-	if not icon then
-		icon = GUIManager:CreateGraphicItem()
-		icon:SetAnchor(GUIItem.Middle, GUIItem.Center)
+	function CreateIcon(_)
+
+		local icon = table_remove(freeIcons)
+		if not icon then
+			icon = GUIManager:CreateGraphicItem()
+			icon:SetAnchor(GUIItem.Middle, GUIItem.Center)
+			icon:SetIsVisible(false)
+			instance.minimap:AddChild(icon)
+		end
+
+		return icon
+	end
+	_G.CreateIcon = CreateIcon
+
+	function CreateIconForKey(self, key)
+		local icon = CreateIcon(self)
+		icon.key = key
+		return icon
+	end
+
+	function FreeIcon(_, icon)
 		icon:SetIsVisible(false)
-		self.minimap:AddChild(icon)
+		table_insert(freeIcons, icon)
 	end
-	-- will cause it to initialize on next call to update.
-	icon.resetMinimapItem = true
-	return icon
-   
+	_G.FreeIcon = FreeIcon
 end
 
-local function CreateIconForEntity(self, entity)
-	local icon = CreateIcon(self)
-	-- will cause it to initialize on next call to update.
-	icon.resetMinimapItem = true
-	-- save the entity this icon was created for; allows us to check if the entityId has been recycled
-	icon.entity = entity
-	return icon
+function AddIcon(entity)
+	icon            = CreateIcon(self)
+	icon.entity     = entity
+	entity[keyIcon] = icon
+	entity:InitMinimapItem(instance, icon)
+	local activity  = entity:UpdateMinimapActivity(instance, icon)
+	table_insert(icons[activity], icon)
 end
 
-local function CreateIconForKey(self, key)
-	local icon = CreateIcon(self)
-	icon.key = key
-	return icon
+function RemoveIcon(entity)
 end
 
-local function FreeIcon(self, icon)
-	icon:SetIsVisible(false)
-	table.insert(self.freeIcons, icon)
-end
-
-
-local function UpdateBlipActivity(self)
-	ResetStaticBlipData()
-	
-	for index, entity in ientitylist(Shared.GetEntitiesWithTag("MinimapMappable")) do
-		local id = entity:GetId()
-		local icon = self.iconMap[id]
-		if icon then
-			if icon.entity ~= entity then
-				-- entity id has been recycled
-				self.iconMap[id] = nil
-				icon.entity = nil
-				FreeIcon(self, icon)
-			end
-		else
-			icon = CreateIconForEntity(self, entity)
-			self.iconMap[id] = icon
-		end
-		local activity = entity:UpdateMinimapActivity(self, self.iconMap[id])
-		if activity then
-			local addBlip = true
-			-- don't add things outside the update radius; saves CPU for marine HUD
-			if self.updateRadius > 0 then
-				local dist = self.playerOrigin - entity:GetMapBlipOrigin()
-				addBlip = dist:GetLengthSquared() < self.updateRadiusSquared
-			end
-			if addBlip then 
-				local data = self.staticBlipData[activity]
-				table.insert(data.blipIds, id)
-				data.count = data.count + 1				
-				self.iconMap[id].version = version
-			end
-		end
-	end
-	
-	-- clear out any icons no longer in use
-	for id,icon in pairs(self.iconMap) do
-		if icon.version ~= version then
-			self.iconMap[id] = nil
-			FreeIcon(self, icon)
-		end
-	end
-end
+local min = math.min
 
 local function UpdateActivityBlips_While(self, deltaTime, activity)
-	local data = self.staticBlipData[activity]
-	if data.workIndex > data.count then
-		data.workIndex = 1
+	local data  = icons[activity]
+	local start = data.i
+	local stop  = data.i+kBlipActivityUpdateInterval[activity]
+	if stop > #data then
+		stop = stop - #data
 	end
-	local idx = 1 or self.resetAll and 1 or data.workIndex
-	local blipIds = data.blipIds
-	local time = os.clock()
-	for i = idx, data.count do
-		local entityId = blipIds[i]
-		local icon = entityId and self.iconMap[entityId]
-		if icon then
-			local entity = Shared.GetEntity(entityId)
-			-- need to make sure that the entity has not been destroyed and replaced by another entity
-			-- can happen in intense games...
-			if not entity or icon.entity ~= entity then
-				icon:SetIsVisible(false)
-			else
-				entity:UpdateMinimapItem(self, icon)
-			end
-		end
+	for i = start, min(#data, stop) do
+		local icon   = data[i]
+		local entity = icon.entity
+		entity:UpdateMinimapItem(self, icon)
 	end
-	time = os.clock() - time
-	Log("Time passed updating activity blips: %s", time)
+	for i = 1, stop - #data do
+		local icon   = data[i]
+		local entity = icon.entity
+		entity:UpdateMinimapItem(self, icon)
+	end
+	data.i = stop+1
 end
 
 local function UpdateScansAndHighlight(self)
@@ -865,31 +811,6 @@ local function GetFreeDynamicBlip(self, xPos, yPos, blipType)
 	
 end
 
-local function AddDynamicBlip(self, xPos, yPos, blipType)
-
-	--
-	-- Blip types - kAlertType
-	--
-	-- 0 - Attack
-	-- Attention-getting spinning squares that start outside the minimap and spin down to converge to point
-	-- on map, continuing to draw at point for a few seconds).
-	--
-	-- 1 - Info
-	-- Research complete, area blocked, structure couldn't be built, etc. White effect, not as important to
-	-- grab your attention right away).
-	--
-	-- 2 - Request
-	-- Soldier needs ammo, asking for order, etc. Should be yellow or green effect that isn't as
-	-- attention-getting as the under attack. Should draw for a couple seconds.)
-	--
-	
-	if blipType == kAlertType.Attack then
-	
-		
-	end
-	
-end
-
 -- Initialize a minimap item (icon) from a blipType
 function GUIMinimap:InitMinimapIcon(item, blipType, blipTeam)
   
@@ -910,8 +831,6 @@ function GUIMinimap:InitMinimapIcon(item, blipType, blipTeam)
 	item:SetTexture(self.iconFileName)
 	item:SetIsVisible(true)
 	
-	item.resetMinimapItem = false
-	
 	return item
 end
 
@@ -926,11 +845,12 @@ local function UpdateBlipPosition(item, origin)
 	end
 end
 
+local UpdateLocalBlips
 do
 	local spawnBlip
 	local highlightBlip
 	-- update the list of non-entity related mapblips
-	local function UpdateLocalBlips(self)
+	function UpdateLocalBlips(self)
 		if spawnBlip == nil then
 			spawnBlip = self:InitMinimapIcon(CreateIconForKey(self, "spawn"), kMinimapBlipType.MoveOrder, kMinimapBlipTeam.Friendly)
 			spawnBlip:SetIsVisible(false)
@@ -951,16 +871,13 @@ do
 		if highlightPos then
 			UpdateBlipPosition(self, highlightBlip, highlightPos)
 		end
-		
 	end
 end
    
 local function RemoveDynamicBlip(self, blip)
-
 	blip.Item:SetIsVisible(false)
 	table.removevalue(self.inuseDynamicBlips, blip)
 	table.insert(self.reuseDynamicBlips, blip)
-	
 end
 
 local function UpdateAttackBlip(self, blip)
@@ -1007,13 +924,11 @@ local function UpdateDynamicBlips(self)
 
 	for i = 1, #new_blips, 3 do
 		local x, y, type = unpack(new_blips, i, i+2)
-		AddDynamicBlip(self, newDynamicBlips[currentIndex], newDynamicBlips[currentIndex + 1], blipType)
 		local addedBlip = GetFreeDynamicBlip(self, x, y, type)
-		addedBlip.Item:SetSize(Vector(0, 0, 0))
+		addedBlip.Item:SetSize(Vector.origin)
 		addedBlip.Time = Shared.GetTime() + kAttackBlipTime
 	end
 	
-	local removeBlips = { }
 	local in_use = self.inuseDynamicBlips
 	for i = 1, #in_use do
 		if UpdateAttackBlip(self, in_use[i]) then
@@ -1061,25 +976,15 @@ local function UpdateMapClick(self)
 	
 end
 
+local UpdateConnections
 do
-	local connectors  = {}
 	local connections = {}
-	function AddMapConnector(connector)
-		table.insert(connectors, connector)
-	end
-	function RemoveMapConnector(connector)
-		local i = table.find(connectors, connector)
-		table.remove(connectors, i)
-		if connections[i] then
-			connections[i]:Uninitialize()
-			connections[i] = nil
-		end
-	end
-
-	local function UpdateConnections(self)
+	local Shared_GetEntitiesWithClassname = Shared.GetEntitiesWithClassname
+	function UpdateConnections(self)
+		local connectors = Shared.GetEntitiesWithClassname "MapConnector"
+		for index, connector in ientitylist(connectors) do
 		for i = 1, #connectors do
 
-			local connector  = connectors[i]
 			local connection = connections[i]
 			
 			if not connection then
@@ -1098,6 +1003,10 @@ do
 			)
 			
 			connection:UpdateAnimation(connector:GetTeamNumber(), self.comMode = GUIMinimapFrame.kModeMini)
+		end
+		for i = #connections, connectors:GetSize()+1, -1 do
+			connections[i]:Uninitialize()
+			connections[i] = nil
 		end
 	end
 end
@@ -1146,8 +1055,6 @@ function GUIMinimap:Update(deltaTime)
 		local now = Shared.GetTime()
 		local player = Client.GetLocalPlayer()
 		
-		-- need to recalc the player team because it may have changed
-		-- maybe smarter to rebuild gui scripts on team change...
 		local playerTeam = player:GetTeamNumber()
 		if playerTeam == kMarineTeamType then
 			playerTeam = kMinimapBlipTeam.Marine
@@ -1172,20 +1079,12 @@ function GUIMinimap:Update(deltaTime)
 		UpdateActivityBlips_While(self, deltaTime, kMinimapActivity.Medium)
 		UpdateActivityBlips_While(self, deltaTime, kMinimapActivity.High)
 		
-		if now > self.nextActivityUpdateTime then
-			self.nextActivityUpdateTime = now + kActivityUpdateInterval * GUIMinimap.kUpdateIntervalMultipler * self.updateIntervalMultipler 
-			UpdateBlipActivity(self)
-			-- do other things we only need to do very rarely..
-			HideUnusedNameTags(self)
-			local optionsMinimapNames = Client.GetOptionBoolean("minimapNames", true)
-			self.showPlayerNames = optionsMinimapNames == true and self:LargeMapIsVisible()
-			self.spectating = player:GetTeamType() == kNeutralTeamType
-			self.clientIndex = player:GetClientIndex()
-			local r = self.updateRadius / self.scale
-			self.updateRadiusSquared = r*r
-		end
-		
-		self.resetAll = false
+		UpdateBlipActivity(self)
+		HideUnusedNameTags(self)
+		local optionsMinimapNames = Client.GetOptionBoolean("minimapNames", true)
+		self.showPlayerNames = optionsMinimapNames == true and self:LargeMapIsVisible()
+		self.spectating = player:GetTeamType() == kNeutralTeamType
+		self.clientIndex = player:GetClientIndex()
 		
 	end
 	
@@ -1272,11 +1171,13 @@ function GUIMinimap:SetLocationNamesEnabled(enabled)
 	end
 end
 
--- set the resetAll flag; next Update() all blips will be fully updated (avoids uglyness when zooming)
 function GUIMinimap:ResetAll()
-	self.resetAll = true
-	for id, icon in pairs(self.iconMap) do
-		icon.resetMinimapItem = true
+	for i = 1, #icons do
+		local data = icons[i]
+		for j = 1, #data do
+			local icon = data[j]
+			icon.entity:InitMinimapItem(self, icon)
+		end
 	end
 end
 
