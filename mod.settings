@@ -1,6 +1,8 @@
 name        = "NS2 Optimizations - Dev version (highly experimental)"
 source_dir  = "source"
 output_dir  = "output"
+description = [=[]=]
 image       = "preview.jpg"
 tag_modtype = ""
 tag_support = "Must be run on Server"
+publish_id = "37ae5809"

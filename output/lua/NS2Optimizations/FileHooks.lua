@@ -8,7 +8,7 @@ They indicate badly written code, and help debugging.
 ------------------------------
 ]=]
 
-Script.Load("lua/NS2Optimizations/Closure.lua")
+Script.Load("lua/NS2Optimizations/Closures/Closure.lua")
 
 local kVersion = 6
 
@@ -93,7 +93,7 @@ kRelevantToAll = 0x8000000
 Script.Load "lua/NS2Optimizations/Table.lua"
 
 Script.Load "lua/NS2Optimizations/Closures/Utility.lua"
-ModLoader.SetupFileHook("lua/Entity.lua", "lua/NS2Optimizations/Entity.lua", "post")
+ModLoader.SetupFileHook("lua/Entity.lua", "lua/NS2Optimizations/Closures/Entity.lua", "post")
 
 if Shared then
 	Script.Load "lua/NS2Optimizations/TraceCaching/TraceRayCache.lua"
@@ -219,8 +219,8 @@ if Shared then
 end
 
 Script.Load "lua/NS2Optimizations/FastMixin/init.lua"
-ModLoader.SetupFileHook("lua/MixinUtility.lua",           "lua/NS2Optimizations/MixinUtility.lua",             "replace")
-ModLoader.SetupFileHook("lua/MixinDispatcherBuilder.lua", "",                                                  "halt")
+ModLoader.SetupFileHook("lua/MixinUtility.lua",           "lua/NS2Optimizations/FastMixin/MixinUtility.lua",   "replace")
+ModLoader.SetupFileHook("lua/MixinDispatcherBuilder.lua", true                                                 "halt")
 ModLoader.SetupFileHook("lua/Mixins/BaseModelMixin.lua",  "lua/NS2Optimizations/FastMixin/BaseModelMixin.lua", "post")
 ModLoader.SetupFileHook("lua/ScoringMixin.lua",           "lua/NS2Optimizations/FastMixin/ScoringMixin.lua",   "post")
 
@@ -236,17 +236,17 @@ ModLoader.SetupFileHook("lua/TechTreeConstants.lua", "lua/NS2Optimizations/Tech/
 
 if kNS2OptiConfig.SaneMinimap then
 	for _, v in ipairs {
-		"GUIMinimap",
+		--"GUIMinimap",
 		"GUIManager",
-		"GUIUtility",
-		"MapBlip",
-		"MapBlipMixin",
-		"MinimapMappableMixin",
-		"MinimapConnectionMixin",
-		"MapConnector",
-		"GUIMinimapFrame",
-		"GUIMinimapButtons",
-		"GUIMinimapFrame",
+		--"GUIUtility",
+		--"MapBlip",
+		--"MapBlipMixin",
+		--"MinimapMappableMixin",
+		--"MinimapConnectionMixin",
+		--"MapConnector",
+		--"GUIMinimapFrame",
+		--"GUIMinimapButtons",
+		--"GUIMinimapFrame",
 	} do
 		ModLoader.SetupFileHook("lua/"..v..".lua", "lua/NS2Optimizations/SaneMinimap/"..v..".lua", "post")
 	end
