@@ -1,4 +1,4 @@
-Script.Load("lua/NS2Optimizations/CacheUtility.lua")
+Script.Load("lua/NS2Optimizations/TraceCaching/CacheUtility.lua")
 
 local table_new = require "table.new"
 local max = math.max
