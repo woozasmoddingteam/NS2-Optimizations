@@ -79,11 +79,11 @@ local kConfigFile = Server and "NS2OptiServer.json" or "NS2OptiClient.json"
 kNS2OptiConfig = LoadConfigFile(kConfigFile, default_config)
 if kNS2OptiConfig.__Version ~= kVersion then
 	Shared.Message [[
------------------------------------------------
+---------------------------------------------------------
 NS2 Optimizations has been updated!
------------------------------------------------
+Please adjust your configuration values accordingly.
+---------------------------------------------------------
 ]]
-	kNS2OptiConfig = default_config
 end
 applyDefault(kNS2OptiConfig, default_config);
 SaveConfigFile(kConfigFile, kNS2OptiConfig)
@@ -220,7 +220,7 @@ end
 
 Script.Load "lua/NS2Optimizations/FastMixin/init.lua"
 ModLoader.SetupFileHook("lua/MixinUtility.lua",           "lua/NS2Optimizations/FastMixin/MixinUtility.lua",   "replace")
-ModLoader.SetupFileHook("lua/MixinDispatcherBuilder.lua", true                                                 "halt")
+ModLoader.SetupFileHook("lua/MixinDispatcherBuilder.lua", true,                                                 "halt")
 ModLoader.SetupFileHook("lua/Mixins/BaseModelMixin.lua",  "lua/NS2Optimizations/FastMixin/BaseModelMixin.lua", "post")
 ModLoader.SetupFileHook("lua/ScoringMixin.lua",           "lua/NS2Optimizations/FastMixin/ScoringMixin.lua",   "post")
 
