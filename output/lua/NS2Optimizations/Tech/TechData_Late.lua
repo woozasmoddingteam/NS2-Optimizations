@@ -67,5 +67,3 @@ end
 disable "ClearCachedTechData"
 disable "GetCachedTechData"
 disable "SetCachedTechData"
-
-Log "Loaded TechData_Late.lua!"
