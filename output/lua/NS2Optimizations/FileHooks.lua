@@ -201,19 +201,6 @@ if Shared then
 				if SetTraceBoxOptions then SetTraceBoxOptions(data.box) end
 				if SetTraceCapsuleOptions then SetTraceCapsuleOptions(data.capsule_abs, data.capsule_rel) end
 			end)
-			local tracer      = dofile "lua/NS2Optimizations/Tracer.lua"
-			Event.Hook("Console_test_trace", function()
-				do return end
-				Log("Here! %s", tracelogger)
-				local p = Client.GetLocalPlayer()
-				local start = p:GetOrigin()
-				local stop  = start + 10
-				tracer.start("config://traces.txt")
-				for i = 1, 1000 do
-					local t = Shared.TraceRay(start, stop, CollisionRep.Default)
-				end
-				tracer.stop()
-			end)
 		end
 	end
 end
@@ -248,9 +235,10 @@ if kNS2OptiConfig.SaneMinimap then
 		--"GUIMinimapButtons",
 		--"GUIMinimapFrame",
 	} do
-		ModLoader.SetupFileHook("lua/"..v..".lua", "lua/NS2Optimizations/SaneMinimap/"..v..".lua", "post")
+		ModLoader.SetupFileHook("lua/"..v..".lua", "lua/NS2Optimizations/SaneMinimap/"..v..".lua", "replace")
 	end
 
 	ModLoader.SetupFileHook("lua/NS2Plus/GUIScripts/GUIMinimap.lua", true, "halt")
+	ModLoader.SetupFileHook("lua/shine/extensions/chatbox/client.lua", "lua/NS2Optimizations/SaneMinimap/shine_chatbox.lua", "replace")
 	-- Will be replaced by an override of Class_ReplaceMethod, so that the entire file won't be replaced
 end

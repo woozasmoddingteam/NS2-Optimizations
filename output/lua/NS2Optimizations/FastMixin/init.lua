@@ -37,6 +37,7 @@ class = function(name)
 	cls.GetMixinConstant = GetMixinConstant
 
 	return function(base)
+		assert(type(base) == "table", "Not a valid base class!")
 		meta.base = base
 		if base.__is_ent or base == Entity then
 			cls.__is_ent = true

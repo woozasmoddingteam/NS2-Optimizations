@@ -2,5 +2,3 @@ modEntry = {
    FileHooks = "lua/NS2Optimizations/FileHooks.lua",
    Priority = 0
 }
-
-Log "\n\n\nTESTING\n\n\n"

@@ -12,40 +12,43 @@ Script.Load("lua/GUIUtility.lua")
 local
 	push,
 	pop,
-	clock,
-	GUI,
-	Shared,
-	Client =
-	table.insert,
-	table.remove,
+	find,
 	clock,
 	GUI,
 	Shared,
 	Client
+	=
+	table.insert,
+	table.remove,
+	table.find,
+	os.clock,
+	GUI,
+	Shared,
+	Client
 
-kGUILayerDebugText            = 0
-kGUILayerDeathScreen          = 1
-kGUILayerChat                 = 3
-kGUILayerPlayerNameTags       = 4
-kGUILayerPlayerHUDBackground  = 5
-kGUILayerPlayerHUD            = 6
-kGUILayerPlayerHUDForeground1 = 7
-kGUILayerPlayerHUDForeground2 = 8
-kGUILayerPlayerHUDForeground3 = 9
-kGUILayerPlayerHUDForeground4 = 10
-kGUILayerCommanderAlerts      = 11
-kGUILayerCommanderHUD         = 12
-kGUILayerLocationText         = 13
-kGUILayerMinimap              = 14
-kGUILayerScoreboard           = 15
-kGUILayerCountDown            = 16
-kGUILayerTestEvents           = 17
-kGUILayerMainMenuNews         = 19
-kGUILayerMainMenu             = 20
-kGUILayerMainMenuWeb          = 50
-kGUILayerMainMenuDialogs      = 60
-kGUILayerTipVideos            = 70
-kGUILayerOptionsTooltips      = 100
+kGUILayerDebugText             = 0
+kGUILayerDeathScreen           = 1
+kGUILayerChat                  = 3
+kGUILayerPlayerNameTags        = 4
+kGUILayerPlayerHUDBackground   = 5
+kGUILayerPlayerHUD             = 6
+kGUILayerPlayerHUDForeground1  = 7
+kGUILayerPlayerHUDForeground2  = 8
+kGUILayerPlayerHUDForeground3  = 9
+kGUILayerPlayerHUDForeground4  = 10
+kGUILayerCommanderAlerts       = 11
+kGUILayerCommanderHUD          = 12
+kGUILayerLocationText          = 13
+kGUILayerMinimap               = 14
+kGUILayerScoreboard            = 15
+kGUILayerCountDown             = 16
+kGUILayerTestEvents            = 17
+kGUILayerMainMenuNews          = 19
+kGUILayerMainMenu              = 20
+kGUILayerMainMenuServerDetails = 40
+kGUILayerMainMenuDialogs       = 60
+kGUILayerTipVideos             = 70
+kGUILayerOptionsTooltips       = 100
 
 -- Seconds
 local kMaxUpdateTime = 0.002 -- If the update time of GUIManager exceeds this value, it will stop updating and wait for the next tick.
@@ -54,7 +57,7 @@ local kUpdateInterval = 0.04
 local GUIManager = {}
 _G.GUIManager = GUIManager
 
-local nextScript
+local nextScript         = 1
 
 local scripts            = {}
 local path_to_script     = {}
@@ -64,10 +67,12 @@ do
 	local files = {}
 	Shared.GetMatchingFileNames("lua/*", true, files)
 	for i = 1, #files do
-		local file = scripts[i]:sub(5)
-		local split = string.split(file, "/")
-		path_to_script[file] = split[#split]
-		Log("Found script %s with class %s at path %s!", file, split[#split], files[i])
+		local file = files[i]:sub(5) -- #"lua/" + 1
+		if file:sub(-4) == ".lua" then
+			file = file:sub(1, -5)
+			local name = pop(file:Explode("/"))
+			path_to_script[file] = name
+		end
 	end
 end
 
@@ -82,10 +87,17 @@ local function link(m, f)
 end
 
 local function CreateGUIScript(path)
-	local script = path_to_script[path]()
+	local script_name = path_to_script[path] or path
+	local class  = _G[script_name]
+	if class == nil then
+		Script.Load("lua/" .. path .. ".lua")
+		class = _G[script_name]
+	end
+	local script = class()
 	script:Initialize()
 	script.updateInterval = script.updateInterval or kUpdateInterval
 	script.lastUpdateTime = 0
+	script._name = path
 
 	push(scripts, script)
 	return script
@@ -104,8 +116,14 @@ function GUIManager:CreateGUIScriptSingle(path)
 end
 
 local function DestroyGUIScript(script)
-	if table.removevalue(scripts, script) then
+	local index = find(scripts, script)
+	if index then
+		pop(scripts, index)
 		script:Uninitialize()
+		-- When destroying GUI scripts, an update to a script might be missed. Not a huge problem.
+		if nextScript > #scripts then
+			nextScript = 1
+		end
 		return true
 	else
 		return false
@@ -124,6 +142,8 @@ end
 
 function GUIManager.NotifyGUIItemDestroyed() end
 
+local Message = Shared.Message
+
 local function Update(deltaTime)
     PROFILE("GUIManager:Update")
     
@@ -132,27 +152,31 @@ local function Update(deltaTime)
     local now  = clock()
 	local nowt = Shared.GetTime() -- nowt(ick)
 	for i = nextScript, numScripts do
-        local script = scripts[s]
+        local script = scripts[i]
 		
 		if nowt - script.lastUpdateTime > script.updateInterval then
 			script.lastUpdateTime = nowt
 			script:Update(deltaTime)
 			-- Spent too much time updating
-			if kMaxUpdateTime < clock() - now then
-				nextScript = (numScripts == i and 1 or i) + 1
+			local time = clock() - now
+			if kMaxUpdateTime < time then
+				Message("Too much time (" .. time * 1000 .. " ms) used, early exit!")
+				nextScript = (numScripts == i and 0 or i) + 1
 				return
 			end
 		end
     end
 
 	for i = 1, nextScript-1 do
-        local script = scripts[s]
+        local script = scripts[i]
 		
 		if nowt - script.lastUpdateTime > script.updateInterval then
 			script.lastUpdateTime = nowt
 			script:Update(deltaTime)
 			-- Spent too much time updating
-			if kMaxUpdateTime < clock() - now then
+			local time = clock() - now
+			if kMaxUpdateTime < time then
+				Message("Too much time (" .. time * 1000 .. " ms) used, early exit!")
 				nextScript = i + 1
 				return
 			end
@@ -197,6 +221,6 @@ end
 link("CreateLinesItem", GUIManager.CreateTextItem)
 
 if Event then
-    Event.Hook("UpdateClient", OnUpdate, "GUIManager")
-    Event.Hook("ResolutionChanged", OnResolutionChanged)
+    Event.Hook("UpdateClient", Update, "GUIManager")
+    Event.Hook("ResolutionChanged", GUIManager.OnResolutionChanged)
 end
