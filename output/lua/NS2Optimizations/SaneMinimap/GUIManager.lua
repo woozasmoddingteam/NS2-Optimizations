@@ -142,8 +142,6 @@ end
 
 function GUIManager.NotifyGUIItemDestroyed() end
 
-local Message = Shared.Message
-
 local function Update(deltaTime)
     PROFILE("GUIManager:Update")
     
@@ -160,7 +158,6 @@ local function Update(deltaTime)
 			-- Spent too much time updating
 			local time = clock() - now
 			if kMaxUpdateTime < time then
-				Message("Too much time (" .. time * 1000 .. " ms) used, early exit!")
 				nextScript = (numScripts == i and 0 or i) + 1
 				return
 			end
@@ -176,7 +173,6 @@ local function Update(deltaTime)
 			-- Spent too much time updating
 			local time = clock() - now
 			if kMaxUpdateTime < time then
-				Message("Too much time (" .. time * 1000 .. " ms) used, early exit!")
 				nextScript = i + 1
 				return
 			end
