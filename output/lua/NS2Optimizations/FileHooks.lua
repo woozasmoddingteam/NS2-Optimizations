@@ -31,7 +31,7 @@ local default_config = Server and {
 		}
 	},
 	InfinitePlayerRelevancy   = false,
-	UnsafeTableOptimizations  = false,
+	UnsafeTableOptimizations  = true,
 	UnsafeTechIdOptimizations = true,
 	FastMixin = true,
 	__Version = kVersion
@@ -53,7 +53,7 @@ local default_config = Server and {
 			Relative = 0.2
 		}
 	},
-	UnsafeTableOptimizations  = false,
+	UnsafeTableOptimizations  = true,
 	UnsafeTechIdOptimizations = true,
 	FastMixin = true,
 	SaneMinimap = true,
@@ -85,6 +85,7 @@ Please adjust your configuration values accordingly.
 ---------------------------------------------------------
 ]]
 end
+kNS2OptiConfig.__Version = kVersion
 applyDefault(kNS2OptiConfig, default_config);
 SaveConfigFile(kConfigFile, kNS2OptiConfig)
 
@@ -238,7 +239,6 @@ if kNS2OptiConfig.SaneMinimap then
 		ModLoader.SetupFileHook("lua/"..v..".lua", "lua/NS2Optimizations/SaneMinimap/"..v..".lua", "replace")
 	end
 
-	ModLoader.SetupFileHook("lua/NS2Plus/GUIScripts/GUIMinimap.lua", true, "halt")
+	--ModLoader.SetupFileHook("lua/NS2Plus/GUIScripts/GUIMinimap.lua", true, "halt")
 	ModLoader.SetupFileHook("lua/shine/extensions/chatbox/client.lua", "lua/NS2Optimizations/SaneMinimap/shine_chatbox.lua", "replace")
-	-- Will be replaced by an override of Class_ReplaceMethod, so that the entire file won't be replaced
 end
