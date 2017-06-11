@@ -1,11 +1,13 @@
-Script.Load "lua/CollisionRep.lua"
+Log "ControllerMixin.lua"
 
-local Default = CollisionRep.Default
-local Damage  = CollisionRep.Damage
-local Select  = CollisionRep.Select
-local LOS     = CollisionRep.LOS
+local Default     = Shared.GetCollisionRepId("default")
+local Move        = Shared.GetCollisionRepId("move")
+local Damage      = Shared.GetCollisionRepId("damage")
+local Select      = Shared.GetCollisionRepId("select")
+local LOS         = Shared.GetCollisionRepId("los")
 
-local origin = Vector.origin
+local kSkinOffset = 0.1
+
 function ControllerMixin:UpdateControllerFromEntity(allowTrigger)
 
     PROFILE("ControllerMixin:UpdateControllerFromEntity")
@@ -14,7 +16,11 @@ function ControllerMixin:UpdateControllerFromEntity(allowTrigger)
         allowTrigger = true
     end
 
-    if self.controller ~= nil then
+	local controller = self.controller
+
+    if controller ~= nil then
+
+		local outer = self.controllerOutter
     
         local controllerHeight, controllerRadius = self:GetControllerSize()
         
@@ -24,49 +30,48 @@ function ControllerMixin:UpdateControllerFromEntity(allowTrigger)
             self.controllerRadius = controllerRadius
         
             local capsuleHeight = controllerHeight - 2*controllerRadius
+
+			local coords = controller:GetCoords()
         
             if capsuleHeight < 0.001 then
                 -- Use a sphere controller
-                self.controller:SetupSphere( controllerRadius, self.controller:GetCoords(), allowTrigger )
+                controller:SetupSphere( controllerRadius, coords, allowTrigger )
             else
                 -- A flat bottomed cylinder works well for movement since we don't
                 -- slide down as we walk up stairs or over other lips. The curved
                 -- edges of the cylinder allows players to slide off when we hit them,
-                self.controller:SetupCapsule( controllerRadius, capsuleHeight, self.controller:GetCoords(), allowTrigger )
-                --self.controller:SetupCylinder( controllerRadius, controllerHeight, self.controller:GetCoords(), allowTrigger )
+                controller:SetupCapsule( controllerRadius, capsuleHeight, coords, allowTrigger )
             end
 
-            if self.controllerOutter then                
-                --self.controllerOutter:SetupBox(Vector(self.controllerRadius * 1.3, self.controllerHeight * 0.5, self.controllerRadius * 1.3), self.controller:GetCoords(), allowTrigger)
-                self.controllerOutter:SetupCylinder( controllerRadius * 1.5, controllerHeight, self.controller:GetCoords(), allowTrigger )
+            if controllerOutter then                
+                controllerOutter:SetupCylinder( controllerRadius * 1.5, controllerHeight, coords, allowTrigger )
             end                
             
             -- Remove all collision reps except movement from the controller.
-			self.controller:RemoveCollisionRep(Default)
-			self.controller:RemoveCollisionRep(Damage)
-			self.controller:RemoveCollisionRep(Select)
-			self.controller:RemoveCollisionRep(LOS)
-			if self.controllerOuter then
-				self.controllerOuter:RemoveCollisionRep(Default)
-				self.controllerOuter:RemoveCollisionRep(Damage)
-				self.controllerOuter:RemoveCollisionRep(Select)
-				self.controllerOuter:RemoveCollisionRep(LOS)
-			end
+			controller:RemoveCollisionRep(LOS)
+			controllerOutter:RemoveCollisionRep(LOS)
+			controller:RemoveCollisionRep(Default)
+			controllerOutter:RemoveCollisionRep(Default)
+			controller:RemoveCollisionRep(Damage)
+			controllerOutter:RemoveCollisionRep(Damage)
+			controller:RemoveCollisionRep(Select)
+			controllerOutter:RemoveCollisionRep(Select)
             
-            self.controller:SetTriggeringCollisionRep(CollisionRep.Move)
-            self.controller:SetPhysicsCollisionRep(CollisionRep.Move)
+            controller:SetTriggeringCollisionRep(CollisionRep.Move)
+            controller:SetPhysicsCollisionRep(CollisionRep.Move)
  
         end
         
         -- The origin of the controller is at its center and the origin of the
         -- player is at their feet, so offset it.
         VectorCopy(self:GetOrigin(), origin)
-        origin.y = origin.y + self.controllerHeight * 0.5 + kSkinOffset
+		local origin = self:GetOrigin()
+        origin.y = origin.y + controllerHeight * 0.5 + kSkinOffset
         
-        self.controller:SetPosition(origin, allowTrigger)
+        controller:SetPosition(origin, allowTrigger)
         
-        if self.controllerOutter then  
-            self.controllerOutter:SetPosition(origin, allowTrigger)
+        if controllerOutter then  
+            controllerOutter:SetPosition(origin, allowTrigger)
         end    
         
     end
