@@ -1,5 +1,3 @@
-Log "ControllerMixin.lua"
-
 local Default     = Shared.GetCollisionRepId("default")
 local Move        = Shared.GetCollisionRepId("move")
 local Damage      = Shared.GetCollisionRepId("damage")
@@ -20,7 +18,7 @@ function ControllerMixin:UpdateControllerFromEntity(allowTrigger)
 
     if controller ~= nil then
 
-		local outer = self.controllerOutter
+		local controllerOutter = self.controllerOutter
     
         local controllerHeight, controllerRadius = self:GetControllerSize()
         
@@ -64,7 +62,6 @@ function ControllerMixin:UpdateControllerFromEntity(allowTrigger)
         
         -- The origin of the controller is at its center and the origin of the
         -- player is at their feet, so offset it.
-        VectorCopy(self:GetOrigin(), origin)
 		local origin = self:GetOrigin()
         origin.y = origin.y + controllerHeight * 0.5 + kSkinOffset
         
