@@ -241,4 +241,5 @@ if kNS2OptiConfig.SaneMinimap then
 
 	--ModLoader.SetupFileHook("lua/NS2Plus/GUIScripts/GUIMinimap.lua", true, "halt")
 	ModLoader.SetupFileHook("lua/shine/extensions/chatbox/client.lua", "lua/NS2Optimizations/SaneMinimap/shine_chatbox.lua", "replace")
+	ModLoader.SetupFileHook("lua/GUIChat.lua", "lua/NS2Optimizations/SaneMinimap/GUIChat.lua", "post")
 end
