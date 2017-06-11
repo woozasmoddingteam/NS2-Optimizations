@@ -80,12 +80,6 @@ function GetGUIManager()
 	return GUIManager
 end
 
-local function link(m, f)
-	GUIManager[m] = function(self, ...)
-		return f(...)
-	end
-end
-
 local function CreateGUIScript(path)
 	local script_name = path_to_script[path] or path
 	local class  = _G[script_name]
@@ -103,7 +97,9 @@ local function CreateGUIScript(path)
 	return script
 end
 
-link("CreateGUIScript", CreateGUIScript)
+function GUIManager:CreateGUIScript(path)
+	return CreateGUIScript(path)
+end
 
 function GUIManager:CreateGUIScriptSingle(path)
 	if single_script_inst[path] ~= nil then
@@ -130,10 +126,14 @@ local function DestroyGUIScript(script)
 	end
 end
 
-link("DestroyGUIScript", DestroyGUIScript)
+function GUIManager:DestroyGUIScript(script)
+	return DestroyGUIScript(script)
+end
 
 function GUIManager:DestroyGUIScriptSingle(path)
-	return DestroyGUIScript(single_script_inst[path])
+	local script = single_script_inst[path]
+	single_script_inst[path] = nil
+	return DestroyGUIScript(script)
 end
 
 function GUIManager:GetGUIScriptSingle(path)
@@ -206,7 +206,9 @@ function GUIManager:OnResolutionChanged(x1, y1, x2, y2)
 	end
 end
 
-link("CreateGraphicItem", GUI.CreateItem)
+function GUIManager.CreateGraphicItem()
+	return GUI.CreateItem()
+end
 
 function GUIManager.CreateTextItem()
 	local item = GUI.CreateItem()
@@ -214,7 +216,7 @@ function GUIManager.CreateTextItem()
 	return item
 end
 
-link("CreateLinesItem", GUIManager.CreateTextItem)
+GUIManager.CreateLinesItem = GUIManager.CreateTextItem
 
 if Event then
     Event.Hook("UpdateClient", Update, "GUIManager")
