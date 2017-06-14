@@ -73,6 +73,6 @@ local function disable(name)
 	end
 end
 
+GetCachedTechData = LookupTechData
 disable "ClearCachedTechData"
-disable "GetCachedTechData"
 disable "SetCachedTechData"
