@@ -41,19 +41,18 @@ function ControllerMixin:UpdateControllerFromEntity(allowTrigger)
                 controller:SetupCapsule( controllerRadius, capsuleHeight, coords, allowTrigger )
             end
 
-            if controllerOutter then                
-                controllerOutter:SetupCylinder( controllerRadius * 1.5, controllerHeight, coords, allowTrigger )
-            end                
-            
             -- Remove all collision reps except movement from the controller.
 			controller:RemoveCollisionRep(LOS)
-			controllerOutter:RemoveCollisionRep(LOS)
 			controller:RemoveCollisionRep(Default)
-			controllerOutter:RemoveCollisionRep(Default)
 			controller:RemoveCollisionRep(Damage)
-			controllerOutter:RemoveCollisionRep(Damage)
 			controller:RemoveCollisionRep(Select)
-			controllerOutter:RemoveCollisionRep(Select)
+			if controllerOutter then
+                controllerOutter:SetupCylinder( controllerRadius * 1.5, controllerHeight, coords, allowTrigger )
+				controllerOutter:RemoveCollisionRep(LOS)
+				controllerOutter:RemoveCollisionRep(Default)
+				controllerOutter:RemoveCollisionRep(Damage)
+				controllerOutter:RemoveCollisionRep(Select)
+			end
             
             controller:SetTriggeringCollisionRep(CollisionRep.Move)
             controller:SetPhysicsCollisionRep(CollisionRep.Move)
