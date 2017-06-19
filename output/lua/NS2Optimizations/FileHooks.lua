@@ -219,7 +219,7 @@ ModLoader.SetupFileHook("lua/TechTreeConstants.lua", "lua/NS2Optimizations/Tech/
 for _, v in ipairs {
 	--"GUIMinimap",
 	"GUIManager",
-	--"GUIUtility",
+	"GUIMinimapFrame",
 	--"MapBlip",
 	--"MapBlipMixin",
 	--"MinimapMappableMixin",
@@ -231,6 +231,7 @@ for _, v in ipairs {
 } do
 	ModLoader.SetupFileHook("lua/"..v..".lua", "lua/NS2Optimizations/GUIRework/"..v..".lua", "replace")
 end
+ModLoader.SetupFileHook("lua/GUIUtility.lua", "lua/NS2Optimizations/GUIRework/GUIUtility.lua", "post")
 ModLoader.SetupFileHook("lua/NS2Plus/GUIScripts/GUIMinimap.lua", true, "halt")
 ModLoader.SetupFileHook("lua/shine/extensions/chatbox/client.lua", "lua/NS2Optimizations/GUIRework/shine_chatbox.lua", "replace")
 ModLoader.SetupFileHook("lua/GUIChat.lua", "lua/NS2Optimizations/GUIRework/GUIChat.lua", "post")
