@@ -151,8 +151,10 @@ local function Update(deltaTime)
 	local nowt = Shared.GetTime() -- nowt(ick)
 	for i = nextScript, numScripts do
         local script = scripts[i]
+
+		local GetIsVisible = script.GetIsVisible -- Only update if it's visible
 		
-		if nowt - script.lastUpdateTime > script.updateInterval then
+		if (GetIsVisible == nil or GetIsVisible(script)) and nowt - script.lastUpdateTime > script.updateInterval then
 			script.lastUpdateTime = nowt
 			script:Update(deltaTime)
 			-- Spent too much time updating
@@ -166,8 +168,10 @@ local function Update(deltaTime)
 
 	for i = 1, nextScript-1 do
         local script = scripts[i]
+
+		local GetIsVisible = script.GetIsVisible -- Only update if it's visible
 		
-		if nowt - script.lastUpdateTime > script.updateInterval then
+		if (GetIsVisible == nil or GetIsVisible(script)) and nowt - script.lastUpdateTime > script.updateInterval then
 			script.lastUpdateTime = nowt
 			script:Update(deltaTime)
 			-- Spent too much time updating
