@@ -1,13 +1,24 @@
 --[[
 
 This is a rewrite of the minimap.
-GUIMinmap and GUIMinimapFrame have been merged.
-We do not check for destroyed blips, but instead rely on the entity responsible telling us.
-This is not a problem as the entity can't leave the client's relevancy.
+GUIMinimap and GUIMinimapFrame have been merged.
 
-]]
+Notable things about the implementation:
+We do not check map blips on each update, to see if we
+need to remove old ones.
+Instead, we delegate this task to the GC.
 
---[[
+On each update, the script iterates through all relevant
+map blips, and updates their icon's position.
+If the icon does not exist, it is created.
+
+Once a mapblip is no longer relevant (or destroyed), the
+icon will be destroyed at the new GC cycle, since
+the table, in which they are contained, is set to have weak keys.
+The keys are the map blip instances, **not** their IDs.
+Once a map blip is destroyed, its table entry will also be destroyed.
+The icon will thus also be unreferenced, and will thus also be
+destroyed.
 
 Nomenclature:
 
@@ -22,35 +33,39 @@ An icon is the icon that represents an entity on the map, e.g. a tech point, a p
 
 Script.Load "lua/GUIMinimapConnection.lua"
 Script.Load "lua/MinimapMappableMixin.lua"
+Script.Load "lua/GUIManager.lua"
 
-local Shared           = Shared
-local Client           = Client
-local push             = table.insert
-local pop              = table.remove
-local math_min         = math.min
-local math_max         = math.max
-local GUIScale         = GUIScale
-local GUIManager       = GUIManager
-local GUIItem          = GUIItem
-local GUI              = GUI
-local Vector           = Vector
-local Color            = Color
-local kNeutralTeamType = kNeutralTeamType
+local Shared            = Shared
+local Client            = Client
+local push              = table.insert
+local pop               = table.remove
+local math_min          = math.min
+local math_max          = math.max
+local GUIScale          = GUIScale
+local GUIGetSprite      = GUIGetSprite
+local GUIManager        = GUIManager
+local GUIItem           = GUIItem
+local GUI               = GUI
+local DestroyItem       = GUI.DestroyItem
+local Vector            = Vector
+local Color             = Color
+local kNeutralTeamType  = kNeutralTeamType
 local CreateGraphicItem = GUIManager.CreateGraphicItem
+local kMinimapBlipType  = kMinimapBlipType
+local origin            = Vector.origin
+local left              = GUIItem.Left
+local top               = GUIItem.Top
+local middle            = GUIItem.Middle
+local center            = GUIItem.Center
 
 local function GUISize(size)
 	return math_min(Client.GetScreenWidth(), Client.GetScreenHeight()) * size
 end
 
-local origin = Vector.origin
-local left   = GUIItem.Left
-local top    = GUIItem.Top
-local middle = GUIItem.Middle
-local center = GUIItem.Center
 local function NewItem()
 	local i = CreateGraphicItem()
-	i:SetAnchor(left, top)
-	i:SetIsVisible(false)
+	i:SetAnchor(middle, center)
+	i:SetIsVisible(true)
 	i:SetPosition(origin)
 	return i
 end
@@ -79,40 +94,34 @@ local kModeZoom = GUIMinimapFrame.kModeZoom
 local kModeBig  = GUIMinimapFrame.kModeBig
 
 -- Player constants
-local kPlayerNameLayer       = 7
 local kPlayerNameFontName    = Fonts.kAgencyFB_Tiny
-local kPlayerNameColorAlien  = Color(1, 189/255, 111/255, 1)
-local kPlayerNameColorMarine = Color(164/255, 241/255, 1, 1)
 
-local kWayPointColor         = Color(1, 1, 1, 1)
+assert(Color().a == 1)
 
 local kTeamColors = {
-	[kMarineTeamType] = ColorIntToColor(kMarineTeamColor),
-	[kAlienTeamType]  = ColorIntToColor(kAlienTeamColor)
+	[0] = Color(1, 1, 1),
+	[1] = Color(0.9, 0.9, 0.9),
+	[2] = Color(0, 216/255, 1, 1),
+	[3] = Color(1, 138/255, 0, 1),
 }
 
-local function ColorFriend(c)
-	c.r = (1 + c.r) / 2
-	c.g = (1 + c.g) / 2
-	c.b = (1 + c.b) / 2
-end
+local kFriendTeamColors = table.dmap(kTeamColors, function(c)
+	return Color(
+		0.5 + c.r / 2,
+		0.5 + c.g / 2,
+		0.5 + c.b / 2,
+		c.a
+	)
+end)
 
-local kPowerNodeColor          = Color(1, 1, 0.7, 1)
-local kDestroyedPowerNodeColor = Color(0.5, 0.5, 0.35, 1)
-
-local kDrifterColor = Color(1, 1, 0, 1)
-local kMACColor     = Color(0, 1, 0.2, 1)
-
-local kBlinkInterval = 1
-
-local kScanColor        = Color(0.2, 0.8, 1, 1)
-local kScanAnimDuration = 2
-
-local kWhite = Color(1, 1, 1, 1)
-
-local kInfestationColor = Color(0.2, 0.7, 0.2, .25)
-
-local shrinkingArrowInitSize
+local kSelfTeamColors   = table.dmap(kTeamColors, function(c)
+	return Color(
+		0.5  + c.r / 2,
+		0.75 * c.g,
+		0.5  + c.b / 2,
+		c.a
+	)
+end)
 
 local kIconTexture = "ui/minimap_blip.dds"
 local kIconWidth   = 32
@@ -127,38 +136,7 @@ local kDynamicBlipsLayer     = 3
 local kLocationNameLayer     = 4
 local kPingLayer             = 5
 local kPlayerIconLayer       = 6
-
-local kBlipTexture = "ui/blip.dds"
-
---[[
-local kBlipPulseSpeed
-local kBlipTime
-
-local locationFontSize
-local kLocationFontName = Fonts.kAgencyFB_Smaller_Bordered
-
-local kMinimapActivity = kMinimapActivity
-local Static   = kMinimapActivity.Static
-local Low      = kMinimapActivity.Low
-local Medium   = kMinimapActivity.Medium
-local High     = kMinimapActivity.High
-
-local kBlipUpdateCount = {
-	[Static] = -1,
-	[Low]    = 0,
-	[Medium] = 4,
-	[High]   = 9,
-}
-
-local kBackgroundWidth  = {
-	[kModeMini] = 300,
-	[kModeZoom] = 380,
-}
-local kBackgroundHeight = {
-	[kModeMini] = 300,
-	[kModeZoom] = 360,
-}
---]]
+local kPlayerNameLayer       = 7
 
 local kMinimapOrigin_x = Client.minimapExtentOrigin.x
 local kMinimapOrigin_z = Client.minimapExtentOrigin.z
@@ -184,78 +162,6 @@ function GetDesiredSpawnPosition()
 	return desiredSpawnPosition
 end
 
---[=[
-do
-	local available = {}
-
-	local function CreateNewNameTag(self)
-		local nameTag = NewItem()
-
-		nameTag:SetFontSize(playerNameFontSize)
-		nameTag:SetFontIsBold(false)
-		nameTag:SetFontName(kPlayerNameFontName)
-		nameTag:SetTextAlignmentX(GUIItem.Align_Center)
-		nameTag:SetTextAlignmentY(GUIItem.Align_Center)
-		nameTag:SetLayer(kPlayerNameLayer)
-		minimap:AddChild(nameTag)
-
-		return nameTag
-	end
-
-	function AllocNameTag()
-		return pop(available) or CreateNewNameTag()
-	end
-
-	function FreeNameTag(tag)
-		tag:SetIsVisible(false)
-		push(available, tag)
-	end
-end
-local AllocNameTag, FreeNameTag = AllocNameTag, FreeNameTag
-
-do
-	local available = {}
-
-	function AllocIcon()
-		local icon = pop(freeIcons)
-		if not icon then
-			icon = NewItem()
-			minimap:AddChild(icon)
-		end
-
-		return icon
-	end
-
-	function FreeIcon(_, icon)
-		icon:SetIsVisible(false)
-		push(freeIcons, icon)
-	end
-end
-local AllocIcon, FreeIcon = AllocIcon, FreeIcon
-
-do
-	local available = {}
-
-	function AllocBlip()
-		local blip = pop(available)
-		if not blip then
-			blip = NewItem()
-			blip:SetLayer(kDynamicBlipsLayer)
-			blip:SetTexture(kBlipTexture)
-			blip:SetBlendTechnique(GUIItem.Add)
-			minimap:AddChild(blip)
-		end
-		return blip
-	end
-
-	function FreeBlip(blip)
-		blip:SetIsVisible(false)
-		push(available, blip)
-	end
-end
-local AllocBlip, FreeBlip = AllocBlip, FreeBlip
-
---]=]
 local function GenerateIntegers(n)
 	local t = {}
 	for i = 1, n do
@@ -264,6 +170,8 @@ local function GenerateIntegers(n)
 	return unpack(t)
 end
 
+GUIMinimapFrame.__KeysUsed = 21
+
 -- These are keys used instead of strings
 -- This should theoretically be faster
 -- Since k is used for constant, q is used for key.
@@ -271,9 +179,7 @@ end
 local
 	qPlayerNameSize,
 	qPlayerNameOffset,
-	qPlayerIcon,
-	qPlayerIconSize,
-	qPlayerIconInitSize,
+	qIconSize,
 	qBlipMinSize,
 	qBlipMaxSize,
 	qPositionScale,
@@ -289,38 +195,38 @@ local
 	qShowMouse,
 	qShowPlayerNames,
 	qScale,
-	qMode
-	= GenerateIntegers(21)
+	qMode,
+	qZoom,
+	qIcons
+	= GenerateIntegers(GUIMinimapFrame.__KeysUsed)
 
 -- Is called on SetBackgroundMode, which is called together with SetMode commonly!
 function GUIMinimapFrame:OnResolutionChanged()
 	self[qPlayerNameSize]     = GUIScale(8)
 	self[qPlayerNameOffset]   = GUIScale( Vector(11.5, -5, 0) )
-	self[qPlayerIconSize]     = Vector(GUIScale(30), GUIScale(30), 0)
-	self[qPlayerIconInitSize] = Vector(GUIScale(300), GUIScale(300), 0)
+	--self[qPlayerIconInitSize] = Vector(GUIScale(300), GUIScale(300), 0)
 	--self[qBlipSize]           = GUIScale(30)
 	self[qBlipMinSize]        = Vector(GUIScale(25), GUIScale(25), 0)
 	self[qBlipMaxSize]        = Vector(GUIScale(100), GUIScale(100), 0)
 
+	self[qIconSize] = GUIScale(Vector(30, 30, 0))
+
 	local size
 	if self[qMode] == kModeZoom then
-		-- black magic incoming
-		local scale = Client.GetScreenHeight() / 540
-		size = Vector(190 * scale, 180 * scale, 0)
+		size = Vector(190 * kMinimapScale_x, 180 * kMinimapScale_z, 0) * Client.GetScreenHeight() * self[qZoom] * (3 / 540 / 400)
 	else
 		size = GUISize(Vector(0.75, 0.75, 0))
 		self[qMinimap]:SetPosition(size * -0.5)
 	end
 	self[qMinimap]:SetSize(size)
-	self[qMinimapPlotScale_x] = size.x / kMinimapScale_x
-	self[qMinimapPlotScale_z] = size.y / kMinimapScale_z
+	self[qMinimapPlotScale_x] = size.x / kMinimapScale_x * -2
+	self[qMinimapPlotScale_z] = size.y / kMinimapScale_z * 2
 end
 
-function GUIMinimapFrame:PlotToMap(x, z)
-	local size = self[qMinimap]
+local function PlotToMap(self, x, z)
 	return
-		(x - kMinimapOrigin_x) * self[qMinimapPlotScale_x],
-		(z - kMinimapOrigin_z) * self[qMinimapPlotScale_z]
+		(z - kMinimapOrigin_z) * self[qMinimapPlotScale_z],
+		(x - kMinimapOrigin_x) * self[qMinimapPlotScale_x]
 end
 
 function GUIMinimapFrame:GetMinimapItem()
@@ -332,6 +238,11 @@ function GUIMinimapFrame:GetBackground()
 end
 
 function GUIMinimapFrame:Initialize()
+	Log("Initialize() %s", tostring(self))
+	
+	-- key: mapblip instance, value: icon
+	self[qIcons] = setmetatable({}, {__mode = "k"})
+
 	do
 		local minimap = NewItem()
 		minimap:SetTexture("maps/overviews/" .. Shared.GetMapName() .. ".tga")
@@ -339,45 +250,93 @@ function GUIMinimapFrame:Initialize()
 			1, 1, 1, CHUDGetOption("minimapalpha", 0.85)
 		))
 		minimap:SetLayer(kGUILayerMinimap)
+		minimap:SetIsVisible(false)
 		self[qMinimap] = minimap
 	end
 
-	do
-		local playerIcon = NewItem()
-		playerIcon:SetTexture(kIconTexture)
-		local iconCol, iconRow = GetSpriteGridByClass(PlayerUI_GetPlayerClass(), kClassGrid)
-		playerIcon:SetTexturePixelCoordinates(GUIGetSprite(iconCol, iconRow, kIconWidth, kIconHeight))
-		playerIcon:SetLayer(kPlayerIconLayer)
-		self[qMinimap]:AddChild(playerIcon)
-		self[qPlayerIcon] = playerIcon
-	end
-
+	self[qZoom] = 1
 	self:SetBackgroundMode(kModeBig)
 
-	self:OnResolutionChanged()
+	self.updateInterval = 0
 end
 
 function GUIMinimapFrame:ShowMap(b)
 	self[qMinimap]:SetIsVisible(b)
 end
 
-function GUIMinimapFrame:SetBackgroundMode(mode)
-	self[qMode] = mode
-	if mode == kModeZoom then
-		self[qMinimap]:SetAnchor(left, top)
-		self[qMinimap]:SetPosition(origin)
-	elseif mode == kModeBig then
-		self[qMinimap]:SetAnchor(middle, center)
-	end
-	self:OnResolutionChanged()
-	-- TODO: Implement completely
+GUIMinimapFrame.SetIsVisible = GUIMinimapFrame.ShowMap
+
+function GUIMinimapFrame:GetIsVisible()
+	return self[qMinimap]:GetIsVisible()
 end
 
-function GUIMinimapFrame:SetDesiredZoom(zoom)
-	-- TODO: Implement
+function GUIMinimapFrame:SetBackgroundMode(mode)
+	if self[qMode] ~= mode then
+		self[qMode] = mode
+		self[qMinimap]:SetStencilFunc(mode == kModeZoom and GUIItem.NotEqual or GUIItem.Always)
+		self:OnResolutionChanged()
+	end
 end
+
+-- Also SetDesiredZoom
+function GUIMinimapFrame:SetZoom(zoom)
+	self[qZoom] = zoom
+end
+
+GUIMinimapFrame.SetDesiredZoom = GUIMinimapFrame.SetZoom
 
 function GUIMinimapFrame:Uninitialize()
 	GUI.DestroyItem(self[qMinimap])
 end
 
+function GUIMinimapFrame:Update()
+	if self[qMode] == kModeZoom then
+		local player_pos = Client.GetLocalPlayer():GetOrigin()
+		local x, y       = PlotToMap(self, player_pos.x, player_pos.z)
+		self[qMinimap]:SetPosition(-Vector(x, y, 0))
+	end
+
+	local mapblips = Shared.GetEntitiesWithClassname "MapBlip"
+	local GetEntityAtIndex = mapblips.GetEntityAtIndex
+	for i = 0, mapblips:GetSize()-1 do
+		local mapblip = GetEntityAtIndex(mapblips, i)
+		-- truth branch should always be the rare one, due to how both luajit and processors work
+		if mapblip == nil then
+		else
+			local icon = self[qIcons][mapblip]
+			if icon == nil then
+				local clientIndex = mapblip.clientIndex
+				if mapblip:isa "PlayerMapBlip" then
+					Log("Player map blip! its client index: %s, the local player's: %s", clientIndex, Client.GetLocalPlayer().clientIndex)
+				end
+				local colors = (
+					mapblip:isa "PlayerMapBlip" and (
+						clientIndex == Client.GetLocalPlayer().clientIndex and kSelfTeamColors
+						or
+						Client.GetIsSteamFriend(GetSteamIdForClientIndex(clientIndex) or 0) and kFriendTeamColors
+					) or kTeamColors
+				)
+				local color = colors[mapblip.team+1]
+				local coords = kClassGrid[kMinimapBlipType[mapblip.type]]
+				Log("New MapBlip with type %s", kMinimapBlipType[mapblip.type])
+				icon = NewItem()
+				icon:SetSize(self[qIconSize])
+				icon:SetInheritsParentStencilSettings(true)
+				icon:SetColor(color)
+				icon:SetTexture(kIconTexture)
+				icon:SetLayer(kPlayerIconLayer)
+				icon:SetTexturePixelCoordinates(GUIGetSprite(coords[1], coords[2], kIconWidth, kIconHeight))
+				self[qIcons][mapblip] = icon
+				self[qMinimap]:AddChild(icon)
+				Log("Origin: %s; %s", mapblip:GetWorldOrigin(), mapblip:GetParent())
+			end
+			local origin = mapblip:GetWorldOrigin()
+			origin.x, origin.y = PlotToMap(self, origin.x, origin.z)
+			origin.z = 0
+			local size   = icon:GetSize()
+			origin.x = origin.x - size.x/2
+			origin.y = origin.y - size.y/2
+			icon:SetPosition(origin)
+		end
+	end
+end

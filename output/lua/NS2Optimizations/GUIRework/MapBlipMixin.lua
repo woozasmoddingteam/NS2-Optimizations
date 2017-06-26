@@ -1,5 +1,7 @@
 Script.Load "lua/Globals.lua"
 
+local kMinimapBlipType = kMinimapBlipType
+
 MapBlipMixin = CreateMixin( MapBlipMixin )
 MapBlipMixin.type = "MapBlip"
 
@@ -8,7 +10,11 @@ MapBlipMixin.optionalCallbacks =
     OnGetMapBlipInfo = "Override for getting the Map Blip Info",
 }
 
-local function CreateMapBlip(self)
+local keyIsCyst = 0
+
+function MapBlipMixin:__initmixin()
+    assert(Server)
+    
 	local type, team = self:GetMapBlipInfo()
 	if type then
 		local mapName = self:isa("Player") and PlayerMapBlip.kMapName or MapBlip.kMapName
@@ -21,14 +27,6 @@ local function CreateMapBlip(self)
 			self.mapBlip = mapBlip
 		end
 	end
-end
-
-local keyIsCyst = newproxy()
-
-function MapBlipMixin:__initmixin()
-    assert(Server)
-    
-	CreateMapBlip()
 
 	if self:isa "Cyst" then
 		self[keyIsCyst] = true
@@ -110,10 +108,14 @@ function MapBlipMixin:GetMapBlipInfo()
 
 	end
 
-	return
+	do return end
 
 	::found::
     
     return blipType, self.GetTeamNumber and self:GetTeamNumber() or -1
     
+end
+
+function MapBlipMixin:SetControllerClient(client)
+	self.mapBlip.clientIndex = client:GetId()
 end

@@ -406,3 +406,29 @@ do
 		end
 	end
 end
+
+-- Applies function to each element of an array, then pushes the result to another array.
+function table.apply(x, func)
+	local y = {}
+	for i = 1, #x do
+		table_insert(y, func(x[i]))
+	end
+	return y
+end
+
+-- Applies function to each element of an array, then sets corresponding element of another array to result.
+function table.map(x, func)
+	local y = {}
+	for i = 1, #x do
+		y[i] = func(x[i])
+	end
+	return y
+end
+
+function table.dmap(x, func)
+	local y = {}
+	for k, v in pairs(x) do
+		y[k] = func(v)
+	end
+	return y
+end
