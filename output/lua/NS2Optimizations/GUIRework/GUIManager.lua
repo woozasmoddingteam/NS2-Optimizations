@@ -16,7 +16,9 @@ local
 	clock,
 	GUI,
 	Shared,
-	Client
+	Client,
+	min,
+	max
 	=
 	table.insert,
 	table.remove,
@@ -24,7 +26,9 @@ local
 	os.clock,
 	GUI,
 	Shared,
-	Client
+	Client,
+	math.min,
+	math.max
 
 kGUILayerDebugText             = 0
 kGUILayerDeathScreen           = 1
@@ -50,18 +54,17 @@ kGUILayerMainMenuDialogs       = 60
 kGUILayerTipVideos             = 70
 kGUILayerOptionsTooltips       = 100
 
--- Seconds
-local kMaxUpdateTime = 0.002 -- If the update time of GUIManager exceeds this value, it will stop updating and wait for the next tick.
-local kUpdateInterval = 0.04
+local kMaxUpdateTime = 0.008 -- If the update time of GUIManager exceeds this value, it will stop updating and wait for the next tick.
+local qRunTime       = 0     -- Max amount of time a script has ever taken
 
 local GUIManager = {}
-_G.GUIManager = GUIManager
+_G.GUIManager    = GUIManager
 
-local nextScript         = 1
+local nextScript = 1
 
-local scripts            = {}
-local path_to_script     = {}
-local single_script_inst = {}
+local scripts                = {}
+local path_to_script         = {}
+local single_script_inst     = {}
 
 do
 	local files = {}
@@ -87,11 +90,16 @@ local function CreateGUIScript(path)
 		Script.Load("lua/" .. path .. ".lua")
 		class = _G[script_name]
 	end
+
 	local script = class()
 	script:Initialize()
+
 	script.updateInterval = script.updateInterval or kUpdateInterval
 	script.lastUpdateTime = 0
+
 	script._name = path
+
+	script[qRunTime] = 0.000001 -- last value before 0 returned from os.clock
 
 	push(scripts, script)
 	return script
@@ -115,6 +123,8 @@ local function DestroyGUIScript(script)
 	local index = find(scripts, script)
 	if index then
 		pop(scripts, index)
+		pop(scripts_avg_run_time, index)
+		pop(scripts_record_count, index)
 		script:Uninitialize()
 		-- When destroying GUI scripts, an update to a script might be missed. Not a huge problem.
 		if nextScript > #scripts then
@@ -142,44 +152,46 @@ end
 
 function GUIManager.NotifyGUIItemDestroyed() end
 
-local function Update(deltaTime)
+local function Update()
     PROFILE("GUIManager:Update")
     
-	local numScripts = #scripts
-    
-    local now  = clock()
-	local nowt = Shared.GetTime() -- nowt(ick)
+	local numScripts      = #scripts
+	local now             = clock()
+	local max_update_time = now + kMaxUpdateTime
+
 	for i = nextScript, numScripts do
         local script = scripts[i]
 
-		local GetIsVisible = script.GetIsVisible -- Only update if it's visible
-		
-		if (GetIsVisible == nil or GetIsVisible(script)) and nowt - script.lastUpdateTime > script.updateInterval then
-			script.lastUpdateTime = nowt
-			script:Update(deltaTime)
-			-- Spent too much time updating
-			local time = clock() - now
-			if kMaxUpdateTime < time then
-				nextScript = (numScripts == i and 0 or i) + 1
+		if script:GetIsVisible() then
+			local runtime = script[qRunTime]
+			if now + runtime > max_update_time then
+				nextScript = i
 				return
 			end
+			script:Update()
+			local new_now = clock()
+
+			-- a bit inaccurate if lots of invisible scripts were updated in between
+			script[qRunTime] = max(runtime, new_now - now)
+			now = new_now
 		end
     end
 
 	for i = 1, nextScript-1 do
         local script = scripts[i]
 
-		local GetIsVisible = script.GetIsVisible -- Only update if it's visible
-		
-		if (GetIsVisible == nil or GetIsVisible(script)) and nowt - script.lastUpdateTime > script.updateInterval then
-			script.lastUpdateTime = nowt
-			script:Update(deltaTime)
-			-- Spent too much time updating
-			local time = clock() - now
-			if kMaxUpdateTime < time then
-				nextScript = i + 1
+		if script:GetIsVisible() then
+			local runtime = script[qRunTime]
+			if now + runtime > max_update_time then
+				nextScript = i
 				return
 			end
+			script:Update()
+			local new_now = clock()
+
+			-- a bit inaccurate if lots of invisible scripts were updated in between
+			script[qRunTime] = max(runtime, new_now - now)
+			now = new_now
 		end
 	end
 end
@@ -221,6 +233,12 @@ function GUIManager.CreateTextItem()
 end
 
 GUIManager.CreateLinesItem = GUIManager.CreateTextItem
+
+Event.Hook("Console_script_times", function()
+	for i, script in ipairs(scripts) do
+		Log("%s: %s", script._name, script[qRunTime])
+	end
+end)
 
 if Event then
     Event.Hook("UpdateClient", Update, "GUIManager")
