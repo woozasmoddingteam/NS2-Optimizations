@@ -123,8 +123,6 @@ local function DestroyGUIScript(script)
 	local index = find(scripts, script)
 	if index then
 		pop(scripts, index)
-		pop(scripts_avg_run_time, index)
-		pop(scripts_record_count, index)
 		script:Uninitialize()
 		-- When destroying GUI scripts, an update to a script might be missed. Not a huge problem.
 		if nextScript > #scripts then
@@ -152,14 +150,27 @@ end
 
 function GUIManager.NotifyGUIItemDestroyed() end
 
-local function Update()
+local function Update(deltaTime)
     PROFILE("GUIManager:Update")
     
 	local numScripts      = #scripts
+
+	if numScripts == 0 then
+		return
+	end
+
 	local now             = clock()
 	local max_update_time = now + kMaxUpdateTime
 
-	for i = nextScript, numScripts do
+	-- The first script is always executed
+	do
+		local script = scripts[nextScript]
+		script:Update(deltaTime)
+		local new_now = clock(deltaTime)
+		script[qRunTime] = max(script[qRunTime], new_now - now)
+	end
+
+	for i = nextScript+1, numScripts do
         local script = scripts[i]
 
 		if script:GetIsVisible() then
@@ -168,7 +179,7 @@ local function Update()
 				nextScript = i
 				return
 			end
-			script:Update()
+			script:Update(deltaTime)
 			local new_now = clock()
 
 			-- a bit inaccurate if lots of invisible scripts were updated in between
@@ -186,7 +197,7 @@ local function Update()
 				nextScript = i
 				return
 			end
-			script:Update()
+			script:Update(deltaTime)
 			local new_now = clock()
 
 			-- a bit inaccurate if lots of invisible scripts were updated in between

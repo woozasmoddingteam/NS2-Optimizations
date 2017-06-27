@@ -234,6 +234,7 @@ for _, v in ipairs {
 	"GUIChat",
 } do
 	ModLoader.SetupFileHook("lua/"..v..".lua", "lua/NS2Optimizations/GUIRework/"..v..".lua", "post")
+end
 ModLoader.SetupFileHook("lua/NS2Plus/GUIScripts/GUIMinimap.lua", true, "halt")
 ModLoader.SetupFileHook("lua/shine/extensions/chatbox/client.lua", "lua/NS2Optimizations/GUIRework/shine_chatbox.lua", "replace")
 
