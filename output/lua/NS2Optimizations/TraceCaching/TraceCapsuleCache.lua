@@ -14,6 +14,13 @@ local diff = CacheUtility.VectorDiff
 local near = CacheUtility.ScalarNear
 
 local kCacheSize        = kNS2OptiConfig.TraceCacheSize.Capsule
+do
+	local n = math.log(kCacheSize) / math.log(2)
+	if n ~= math.floor(n) then
+		Shared.Message "kCacheSize has to be a power of two!"
+		return
+	end
+end
 if kCacheSize == 0 then
 	return
 end

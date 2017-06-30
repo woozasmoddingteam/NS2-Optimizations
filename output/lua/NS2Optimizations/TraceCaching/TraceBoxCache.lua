@@ -19,7 +19,10 @@ local near = CacheUtility.ScalarNear
 local kCacheSize        = kNS2OptiConfig.TraceCacheSize.Box
 do
 	local n = math.log(kCacheSize) / math.log(2)
-	assert(n == math.floor(n), "kCacheSize has to be a power of two!")
+	if n ~= math.floor(n) then
+		Shared.Message "kCacheSize has to be a power of two!"
+		return
+	end
 end
 if kCacheSize == 0 then
 	return

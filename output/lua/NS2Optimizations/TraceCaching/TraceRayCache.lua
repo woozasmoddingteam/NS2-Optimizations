@@ -17,7 +17,10 @@ local diff = CacheUtility.VectorDiff
 local kCacheSize      = kNS2OptiConfig.TraceCacheSize.Ray
 do
 	local n = math.log(kCacheSize) / math.log(2)
-	assert(n == math.floor(n), "kCacheSize has to be a power of two!")
+	if n ~= math.floor(n) then
+		Shared.Message "kCacheSize has to be a power of two!"
+		return
+	end
 end
 if kCacheSize == 0 then
 	return
