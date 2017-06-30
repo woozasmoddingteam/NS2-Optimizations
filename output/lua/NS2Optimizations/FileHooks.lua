@@ -87,7 +87,7 @@ have been added.
 	SaveConfigFile(kConfigFile, kNS2OptiConfig)
 end
 
-if Client then
+if not Server then
 	kNS2OptiConfig.TraceAcceptance = {
 		Ray     = {
 			Absolute = 0.1

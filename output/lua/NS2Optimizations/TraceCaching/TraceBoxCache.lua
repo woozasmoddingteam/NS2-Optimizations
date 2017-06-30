@@ -24,9 +24,6 @@ do
 		return
 	end
 end
-if kCacheSize == 0 then
-	return
-end
 local kCacheElements    = 8
 local keyStart          = 0
 local keyStop           = 1
@@ -45,6 +42,10 @@ end
 
 function GetTraceBoxOptions()
 	return kAcceptance
+end
+
+if kCacheSize == 0 then
+	return
 end
 
 local cache = table_new(kCacheSize*kCacheElements, 0)
