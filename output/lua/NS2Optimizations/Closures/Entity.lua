@@ -38,6 +38,7 @@ function EntityListToTable(entityList)
     return result
 
 end
+local EntitiyListToTable = EntityListToTable
 
 local table_insert = table.insert
 

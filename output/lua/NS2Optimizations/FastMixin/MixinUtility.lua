@@ -48,7 +48,7 @@ function InitMixin(self, mixin, optionalMixinData)
 		end
 	end
 	if mixin.__initmixin then
-			mixin.__initmixin(self)
+		mixin.__initmixin(self)
 	end
 end
 
