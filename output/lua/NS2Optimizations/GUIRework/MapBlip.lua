@@ -6,21 +6,24 @@ class 'MapBlip' (Entity)
 
 local MapBlip = MapBlip
 local Entity  = Entity
+local AlertNewMapBlip
+local AlertActivity
+local AlertCombat
+local AlertParasite
 
 MapBlip.kMapName = "MapBlip"
 
 local networkVars =
 {
-	--m_origin = "position (by 10000 [0], by 10000 [0], by 10000 [0])",
-	--m_angles = "angles (by 10000 [0], by 10000 [0], by 10000 [0])",
+	m_origin = "position (by 0.2 [2 3 5], by 0.2 [2 3 5], by 0.2 [2 3 5]",
+    m_angles = "angles   (by 10 [0],      by 0.1 [3],     by 10 [0])",
 
     type = "enum kMinimapBlipType",
     team = "integer (" .. kTeamInvalid .. " to " .. kSpectatorIndex .. ")",
+	isHallucination = "boolean",
 
 	inCombat        = "boolean",
-	isParasited     = "boolean",
-	isHallucination = "boolean",
-	active          = "boolean",
+	active          = "boolean"
 }
 
 if Server then
@@ -30,29 +33,33 @@ if Server then
 		self:SetUpdates(false)
 		
 		self:SetRelevancyDistance(Math.infinity)
-
-		local mask 
-
-		if self.team == kTeam1Index then
-			mask = kRelevantToTeam1
-		elseif self.team == kTeam2Index then
-			mask = kRelevantToTeam2
-		else
-			mask = bit.bor(kRelevantToTeam1, kRelevantToTeam2)
-		end
-		
-		self:SetExcludeRelevancyMask(mask)
 	end
 elseif Client then
-	function MapBlip:OnCreate()
-		Entity.OnCreate(self)
+	function MapBlip:OnInitialized()
+		Entity.OnInitialized(self)
+
+		if AlertNewMapBlip  == nil then
+			AlertNewMapBlip  = GUIMinimapFrame.AlertNewMapBlip
+		end
+		if AlertActivity    == nil then
+			AlertActivity    = GUIMinimapFrame.AlertActivity
+		end
+		if AlertCombat      == nil then
+			AlertCombat      = GUIMinimapFrame.AlertCombat
+		end
+		AlertNewMapBlip(self)
+		AlertActivity(self)
+		AlertCombat(self)
 
 		self:SetUpdates(false)
+		self:AddFieldWatcher("type",        AlertNewMapBlip)
+		self:AddFieldWatcher("active",      AlertActivity)
+		self:AddFieldWatcher("inCombat",    AlertCombat)
 	end
 end
 
 -- used by bot brains
-do
+if Server then
 	function MapBlip:GetType()
 		return self.type
 	end
@@ -85,7 +92,9 @@ do
 		return self.isParasited
 	end
 
-	MapBlip.GetOwnerEntityId = MapBlip.GetParentId
+	function MapBlip:GetOwnerEntityId()
+		return self.ownerId
+	end
 end
 
 Shared.LinkClassToMap("MapBlip", MapBlip.kMapName, networkVars)
@@ -97,6 +106,19 @@ PlayerMapBlip.kMapName = "PlayerMapBlip"
 local playerNetworkVars =
 {
     clientIndex = "entityid",
+	isParasited = "boolean",
 }
+
+if Client then
+	function PlayerMapBlip:OnInitialized()
+		MapBlip.OnInitialized(self)
+
+		if AlertParasite == nil then
+			AlertParasite = GUIMinimapFrame.AlertParasite
+		end
+		AlertParasite(self)
+		self:AddFieldWatcher("isParasited", AlertParasite)
+	end
+end
 
 Shared.LinkClassToMap("PlayerMapBlip", PlayerMapBlip.kMapName, playerNetworkVars)
