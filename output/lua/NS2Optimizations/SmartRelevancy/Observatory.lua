@@ -1,14 +1,12 @@
 
 do
-	local nearest_commandstation_key = newproxy()
-
 	function Observatory:FindCommandStation()
-		self[nearest_commandstation_key] = GetNearest(self:GetOrigin(), "CommandStation", self:GetTeamNumber(), Lambda [[(...):GetIsBuilt() and (...):GetIsAlive()]]):GetId()
-		return Shared.GetEntity(self[nearest_commandstation_key])
+		self.nearest_commandstation = GetNearest(self:GetOrigin(), "CommandStation", self:GetTeamNumber(), Lambda [[(...):GetIsBuilt() and (...):GetIsAlive()]]):GetId()
+		return Shared.GetEntity(self.nearest_commandstation)
 	end
 
 	function Observatory:GetCommandStation()
-		return Shared.GetEntity(self[nearest_commandstation_key]) or self:FindCommandStation()
+		return Shared.GetEntity(self.nearest_commandstation) or self:FindCommandStation()
 	end
 
 	function Observatory:GetDistressOrigin()
@@ -24,71 +22,30 @@ if not Server then return end
 
 
 local kDistressBeaconTime = Observatory.kDistressBeaconTime
+local kDistressBeaconEnd  = kDistressBeaconTime + 10
 local kDistressBeaconRange = Observatory.kDistressBeaconRange
 
 local kIgnorePlayers = kNS2OptiConfig.InfinitePlayerRelevancy
 
 local kRelevantToAll = kRelevantToAll
-local oldUpdateIncludeRelevancyMask_key = newproxy()
-local old_include_mask = newproxy()
-
-local function GetPlayersToBeacon(self)
-	local players = { }
-
-	self:GetTeam():ForEachPlayer(Closure [[
-		self toOrigin players
-		args player
-		if not player:isa "Marine" or (player:GetOrigin() - toOrigin):GetLengthSquared() < (kDistressBeaconRange*1.1)^2 then
-			return
-		end
-
-		table.insert(players, player)
-	]] {self:GetDistressOrigin(), players})
-
-	return players
-end
-
-local function altUpdateIncludeRelevancyMask(self)
-	self:SetIncludeRelevancyMask(kRelevantToAll)
-end
 
 local function makeRelevant(self)
-	self[old_include_mask] = self:GetIncludeRelevancyMask()
+	self.__old_include_mask = self:GetIncludeRelevancyMask()
 	self:SetIncludeRelevancyMask(kRelevantToAll)
-end
-
-local function makePlayerRelevant(self)
-	self[oldUpdateIncludeRelevancyMask_key] = self.UpdateClientRelevancyMask
-	self.UpdateIncludeRelevancyMask = altUpdateIncludeRelevancyMask
-	self:UpdateIncludeRelevancyMask()
 end
 
 local function makeIrrelevant(self)
-	self:SetIncludeRelevancyMask(self[old_include_mask])
-	self[old_include_mask] = nil
+	self:SetIncludeRelevancyMask(self.__old_include_mask)
 end
 
-local makePlayerIrrelevant
-
-if kIgnorePlayers then
-	function makePlayerIrrelevant(self)
-		self:SetLOSUpdates(true)
-	end
-else
-	function makePlayerIrrelevant(self)
-		self.UpdateIncludeRelevancyMask = self[oldUpdateIncludeRelevancyMask_key]
-		self[oldUpdateIncludeRelevancyMask_key] = nil
-		self:UpdateIncludeRelevancyMask()
-		self:SetLOSUpdates(true)
-	end
-end
-
-local function beaconStart(self, target, delay)
+local function prepareBeacon(self, delay, los_time)
 	if not kIgnorePlayers then
-		self:AddTimedCallback(makePlayerRelevant, delay)
+		self:AddTimedCallback(makeRelevant, delay)
+		self:AddTimedCallback(makeIrrelevant, kDistressBeaconEnd)
 	end
-	self:AddTimedCallback(makePlayerIrrelevant, kDistressBeaconTime + 5)
-	self:SetLOSUpdates(false)
+	self.timeLastLOSDirty   = los_time
+	self.timeLastLOSUpdate  = los_time
+	self.__x4841 = los_time
 end
 
 local oldTriggerDistressBeacon = Observatory.TriggerDistressBeacon
@@ -96,6 +53,7 @@ local oldTriggerDistressBeacon = Observatory.TriggerDistressBeacon
 function Observatory:TriggerDistressBeacon()
 	self:FindCommandStation()
 	local distressOrigin = self:GetDistressOrigin()
+	local los_time = Shared.GetTime() + kDistressBeaconEnd
 
 	-- May happen at the end of the game?
 	if not distressOrigin or self:GetIsBeaconing() then
@@ -103,60 +61,43 @@ function Observatory:TriggerDistressBeacon()
 	end
 
 	local step = kDistressBeaconTime / Server.GetNumPlayers()
-	local closure_self = {beaconStart, step, distressOrigin, delay = 0}
-
-	local functor = Closure [=[
-		self beaconStart step target
+	GetGamerules():GetTeam1():ForEachPlayer(Closure [=[
+		self prepareBeacon step los_time
 		args player
 
 		if player:isa "Marine" then
-			beaconStart(player, target, self.delay)
+			prepareBeacon(player, self.delay, los_time)
 			self.delay = self.delay + step
 		end
-	]=] (closure_self)
+	]=] {prepareBeacon, step, los_time, delay = 0})
 
-	GetGamerules():GetTeam1():ForEachPlayer(functor) -- Marines
-	GetGamerules():GetTeam2():ForEachPlayer(functor) -- Aliens
-
-	local entities = self:GetCommandStation():GetLocationEntity():GetEntitiesInTrigger()
-	local constructs = {}
-	local ips = {}
-	if #entities == 0 then
-		entities = GetEntitiesWithMixinWithinRange("Construct", distressOrigin, 20)
-		constructs = entities
-		for i = 1, #constructs do
-			if constructs[i]:isa "InfantryPortal" then
-				table.insert(ips, constructs[i])
-			end
-		end
-	else
-		for i = 1, #entities do
-			if entities[i]:isa "InfantryPortal" then
-				table.insert(ips, entities[i])
-				table.insert(constructs, entities[i])
-			elseif HasMixin(entities[i], "Construct") then
-				table.insert(constructs, entities[i])
-			end
-		end
-	end
-	local step = kDistressBeaconTime / #constructs
-
-	Shared.Message("Found " .. #constructs .. " constructs and " .. #ips .. " IPs; step: " .. step)
-
-	local delay = 0
-	for i = 1, #constructs do
-		local construct = constructs[i]
-
-		construct:AddTimedCallback(makeRelevant, delay)
-		construct:AddTimedCallback(makeIrrelevant, kDistressBeaconTime + 5)
-		delay = delay + step
-	end
-
-	local step = kDistressBeaconTime / #ips
+	local ips = GetEntities "InfantryPortal"
+	local step = (kDistressBeaconTime - 0.1) / #ips
 	local delay = 0
 	for i = 1, #ips do
 		ips[i]:AddTimedCallback(ips[i].FinishSpawn, delay)
 		delay = delay + step
+	end
+
+	-- We need to check for LiveMixin, since some entities (e.g. map blips)
+	-- are not supposed to be relevant unconditionally
+	local entities = self:GetCommandStation():GetLocationEntity():GetEntitiesInTrigger()
+	if #entities == 0 then
+		Shared.Message "Found no entities in the location entity!"
+		entities = GetEntitiesWithMixinWithinRange("Live", distressOrigin, 20)
+	end
+	Shared.Message("Found " .. #entities .. " live entities near distress origin")
+	local step = kDistressBeaconTime / #entities
+	local delay = 0
+	for i = 1, #entities do
+		local ent = entities[i]
+		if HasMixin(ent, "Live") and ent.__x4841 ~= los_time then
+			ent:AddTimedCallback(makeRelevant, delay)
+			ent:AddTimedCallback(makeIrrelevant, kDistressBeaconEnd)
+			ent.timeLastLOSDirty   = los_time
+			ent.timeLastLOSUpdate  = los_time
+			delay = delay + step
+		end
 	end
 
 	return oldTriggerDistressBeacon(self)
@@ -171,26 +112,20 @@ function Observatory:PerformDistressBeacon()
 		return
 	end
 
-	local to_beacon = GetPlayersToBeacon(self)
-
-	Shared.Message("Found " .. #to_beacon .. " players to beacon")
-
 	local spawnPoints = GetBeaconPointsForTechPoint(self:GetCommandStation().attachedId)
 	
 	if not spawnPoints then
 		return
 	end
 
-	for i = 1, #to_beacon do
-		local player = to_beacon[i]
-
-		if HasMixin(player, "SmoothedRelevancy") then
-			player:StartSmoothedRelevancy(spawnPoints[i])
+	self:GetTeam():ForEachPlayer(Closure [[
+		self toOrigin spawnPoints
+		args player
+		if player:isa "Marine" and (player:GetOrigin() - toOrigin):GetLengthSquared() > (kDistressBeaconRange*1.1)^2 then
+			player:SetOrigin(spawnPoints[i])
+			player:TriggerBeaconEffects()
 		end
-		player:SetOrigin(spawnPoints[i])
-		player:TriggerBeaconEffects()
-	end
+	]] {self:GetDistressOrigin()})
 
 	self:TriggerEffects("distress_beacon_complete")
-
 end
