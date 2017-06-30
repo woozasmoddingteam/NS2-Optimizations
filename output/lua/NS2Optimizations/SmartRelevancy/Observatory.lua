@@ -27,11 +27,9 @@ local kDistressBeaconRange = Observatory.kDistressBeaconRange
 
 local kIgnorePlayers = kNS2OptiConfig.InfinitePlayerRelevancy
 
-local kRelevantToAll = kRelevantToAll
-
 local function makeRelevant(self)
 	self.__old_include_mask = self:GetIncludeRelevancyMask()
-	self:SetIncludeRelevancyMask(kRelevantToAll)
+	self:SetIncludeRelevancyMask(0xFFFFFFFF)
 end
 
 local function makeIrrelevant(self)

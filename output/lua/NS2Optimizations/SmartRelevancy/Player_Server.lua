@@ -2,7 +2,7 @@ local kRelevantToAll = kRelevantToAll
 
 if kNS2OptiConfig.InfinitePlayerRelevancy then
 	function Player:UpdateIncludeRelevancyMask()
-		 self:SetIncludeRelevancyMask(kRelevantToAll)
+		 self:SetIncludeRelevancyMask(0xFFFFFFFF)
 	end
 end
 
@@ -39,8 +39,6 @@ function Player:UpdateClientRelevancyMask()
 	 elseif self:GetTeamNumber() == kTeamReadyRoom then
 		  mask = kRelevantToReadyRoom
 	 end
-
-	 mask = bit.bor(mask, kRelevantToAll)
 
 	 local client = Server.GetOwner(self)
 	 -- client may be nil if the server is shutting down.

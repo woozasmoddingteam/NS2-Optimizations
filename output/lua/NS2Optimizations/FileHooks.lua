@@ -87,8 +87,6 @@ kNS2OptiConfig.__Version = kVersion
 applyDefault(kNS2OptiConfig, default_config);
 SaveConfigFile(kConfigFile, kNS2OptiConfig)
 
-kRelevantToAll = 0x8000000
-
 Script.Load "lua/NS2Optimizations/Table.lua"
 
 Script.Load "lua/NS2Optimizations/Closures/Utility.lua"
@@ -232,6 +230,8 @@ for _, v in ipairs {
 	"GUIUtility",
 	"GUIScript",
 	"GUIChat",
+	"TunnelEntrance",
+	"Globals",
 } do
 	ModLoader.SetupFileHook("lua/"..v..".lua", "lua/NS2Optimizations/GUIRework/"..v..".lua", "post")
 end
