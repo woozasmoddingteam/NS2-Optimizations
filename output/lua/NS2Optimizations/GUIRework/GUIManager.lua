@@ -55,7 +55,7 @@ kGUILayerTipVideos             = 70
 kGUILayerOptionsTooltips       = 100
 
 local kMaxUpdateTime = 0.008 -- If the update time of GUIManager exceeds this value, it will stop updating and wait for the next tick.
-local qRunTime       = 0     -- Max amount of time a script has ever taken
+local qRunTime       = 0     -- Estimation of time a script takes, with bias towards new numbers
 
 local GUIManager = {}
 _G.GUIManager    = GUIManager
@@ -99,7 +99,7 @@ local function CreateGUIScript(path)
 
 	script._name = path
 
-	script[qRunTime] = 0.000001 -- last value before 0 returned from os.clock
+	script[qRunTime] = 0
 
 	push(scripts, script)
 	return script
@@ -167,7 +167,7 @@ local function Update(deltaTime)
 		local script = scripts[nextScript]
 		script:Update(deltaTime)
 		local new_now = clock(deltaTime)
-		script[qRunTime] = max(script[qRunTime], new_now - now)
+		script[qRunTime] = new_now - now
 	end
 
 	for i = nextScript+1, numScripts do
@@ -183,7 +183,7 @@ local function Update(deltaTime)
 			local new_now = clock()
 
 			-- a bit inaccurate if lots of invisible scripts were updated in between
-			script[qRunTime] = max(runtime, new_now - now)
+			script[qRunTime] = new_now - now
 			now = new_now
 		end
     end
@@ -201,7 +201,7 @@ local function Update(deltaTime)
 			local new_now = clock()
 
 			-- a bit inaccurate if lots of invisible scripts were updated in between
-			script[qRunTime] = max(runtime, new_now - now)
+			script[qRunTime] = new_now - now
 			now = new_now
 		end
 	end
