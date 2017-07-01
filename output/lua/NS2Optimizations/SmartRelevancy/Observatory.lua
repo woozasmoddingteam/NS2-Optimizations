@@ -41,8 +41,8 @@ local function prepareBeacon(self, delay, los_time)
 		self:AddTimedCallback(makeRelevant, delay)
 		self:AddTimedCallback(makeIrrelevant, kDistressBeaconEnd)
 	end
-	self.timeLastLOSDirty   = los_time + delay
-	self.timeLastLOSUpdate  = los_time + delay + 0.1
+	self.timeLastLOSDirty   = los_time + delay * 10
+	self.timeLastLOSUpdate  = los_time + delay * 10 + 0.5
 	self.__x4841 = los_time
 end
 
@@ -92,8 +92,8 @@ function Observatory:TriggerDistressBeacon()
 		if HasMixin(ent, "Live") and ent.__x4841 ~= los_time then
 			ent:AddTimedCallback(makeRelevant, delay)
 			ent:AddTimedCallback(makeIrrelevant, kDistressBeaconEnd)
-			ent.timeLastLOSDirty   = los_time + delay
-			ent.timeLastLOSUpdate  = los_time + delay + step / 2
+			ent.timeLastLOSDirty   = los_time + delay * 10
+			ent.timeLastLOSUpdate  = los_time + delay * 10 + step * (10 / 2)
 			delay = delay + step
 		end
 	end
