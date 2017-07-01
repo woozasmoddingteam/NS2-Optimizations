@@ -120,10 +120,11 @@ function Observatory:PerformDistressBeacon()
 		self toOrigin spawnPoints
 		args player
 		if player:isa "Marine" and (player:GetOrigin() - toOrigin):GetLengthSquared() > (kDistressBeaconRange*1.1)^2 then
-			player:SetOrigin(spawnPoints[i])
+			player:SetOrigin(spawnPoints[self.i])
 			player:TriggerBeaconEffects()
+			self.i = self.i + 1
 		end
-	]] {self:GetDistressOrigin(), spawnPoints})
+	]] {self:GetDistressOrigin(), spawnPoints, i = 1})
 
 	self:TriggerEffects("distress_beacon_complete")
 end
