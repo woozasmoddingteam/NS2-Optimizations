@@ -54,8 +54,8 @@ kGUILayerMainMenuDialogs       = 60
 kGUILayerTipVideos             = 70
 kGUILayerOptionsTooltips       = 100
 
-local kMaxUpdateTime = 0.008 -- If the update time of GUIManager exceeds this value, it will stop updating and wait for the next tick.
-local qRunTime       = 0     -- Estimation of time a script takes, with bias towards new numbers
+local kMaxUpdateTime = 0.008       -- If the update time of GUIManager exceeds this value, it will stop updating and wait for the next tick.
+local qRunTime       = "__runtime" -- Estimation of time a script takes, with bias towards new numbers
 
 local GUIManager = {}
 _G.GUIManager    = GUIManager
