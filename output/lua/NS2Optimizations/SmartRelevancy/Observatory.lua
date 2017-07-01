@@ -123,7 +123,7 @@ function Observatory:PerformDistressBeacon()
 			player:SetOrigin(spawnPoints[i])
 			player:TriggerBeaconEffects()
 		end
-	]] {self:GetDistressOrigin()})
+	]] {self:GetDistressOrigin(), spawnPoints})
 
 	self:TriggerEffects("distress_beacon_complete")
 end
