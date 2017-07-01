@@ -187,79 +187,48 @@ end
 
 GUIMinimapFrame.__KeysUsed = 24
 
--- These are keys used instead of strings
--- This should theoretically be faster
--- Since k is used for constant, q is used for key.
--- Qey
-local
-	qPlayerNameSize,
-	qPlayerNameOffset,
-	qIconSize,
-	qBlipMinSize,
-	qBlipMaxSize,
-	qPositionScale,
-	qMinimap,
-	qMinimapPlotScale_x,
-	qMinimapPlotScale_z,
-	qMinimapFrame,
-	qCameraLines,
-	qChooseSpawnText,
-	qSpawnQueueText,
-	qCommanderPing,
-	qSmokeyBackground,
-	qShowMouse,
-	qShowPlayerNames,
-	qScale,
-	qMode,
-	qZoom,
-	qIcons,
-	qMapBlipIcons,
-	qNextFreeIconSlot,
-	qNumFreeIconSlots
-	= GenerateIntegers(GUIMinimapFrame.__KeysUsed)
-
 -- Is called on SetBackgroundMode, which is called together with SetMode commonly!
 function GUIMinimapFrame:OnResolutionChanged()
-	self[qPlayerNameSize]     = GUIScale(8)
-	self[qPlayerNameOffset]   = GUIScale( Vector(11.5, -5, 0) )
+	self.playerNameSize     = GUIScale(8)
+	self.playerNameOffset   = GUIScale( Vector(11.5, -5, 0) )
 	--self[qPlayerIconInitSize] = Vector(GUIScale(300), GUIScale(300), 0)
 	--self[qBlipSize]           = GUIScale(30)
-	self[qBlipMinSize]        = Vector(GUIScale(25), GUIScale(25), 0)
-	self[qBlipMaxSize]        = Vector(GUIScale(100), GUIScale(100), 0)
+	self.blipMinSize        = Vector(GUIScale(25), GUIScale(25), 0)
+	self.blipMaxSize        = Vector(GUIScale(100), GUIScale(100), 0)
 
-	self[qIconSize] = GUIScale(Vector(30, 30, 0))
+	self.iconSize = GUIScale(Vector(30, 30, 0))
 
 	local size
-	if self[qMode] == kModeZoom then
-		size = Vector(190 * kMinimapScale_x, 180 * kMinimapScale_z, 0) * Client.GetScreenHeight() * self[qZoom] * (3 / 540 / 400)
+	if self.mode == kModeZoom then
+		size = Vector(190 * kMinimapScale_x, 180 * kMinimapScale_z, 0) * Client.GetScreenHeight() * self.zoom * (3 / 540 / 400)
 	else
 		size = GUISize(Vector(0.75, 0.75, 0))
-		self[qMinimap]:SetPosition(size * -0.5)
+		self.minimap:SetPosition(size * -0.5)
 	end
-	self[qMinimap]:SetSize(size)
-	self[qMinimapPlotScale_x] = size.x / kMinimapScale_x * -2
-	self[qMinimapPlotScale_z] = size.y / kMinimapScale_z * 2
+	self.minimap:SetSize(size)
+	self.minimapPlotScale_x = size.x / kMinimapScale_x * -2
+	self.minimapPlotScale_z = size.y / kMinimapScale_z * 2
 end
 
 local function PlotToMap(self, x, z)
 	return
-		(z - kMinimapOrigin_z) * self[qMinimapPlotScale_z],
-		(x - kMinimapOrigin_x) * self[qMinimapPlotScale_x]
+		(z - kMinimapOrigin_z) * self.minimapPlotScale_z,
+		(x - kMinimapOrigin_x) * self.minimapPlotScale_x
 end
 
 function GUIMinimapFrame:GetMinimapItem()
-	return self[qMinimap]
+	return self.minimap
 end
 
 function GUIMinimapFrame:GetBackground()
-	return self[qMinimap]
+	return self.minimap
 end
 
 local minimapframes = {}
 
 function GUIMinimapFrame.AlertActivity(mapblip)
 	for _, self in ipairs(minimapframes) do
-		local icon = self[qMapBlipIcons][mapblip]
+		local icon = self.mapBlipIcons[mapblip]
 		local activity = mapblip.active
 		if icon.active ~= activity then
 			icon.active = activity
@@ -276,7 +245,7 @@ end
 
 function GUIMinimapFrame.AlertCombat(mapblip)
 	for _, self in ipairs(minimapframes) do
-		local icon = self[qMapBlipIcons][mapblip]
+		local icon = self.mapBlipIcons[mapblip]
 		local combat = mapblip.inCombat
 		icon.inCombat = combat and Shared.GetTime()
 	end
@@ -284,7 +253,7 @@ end
 
 function GUIMinimapFrame.AlertParasite(mapblip)
 	for _, self in ipairs(minimapframes) do
-		local icon = self[qMapBlipIcons][mapblip]
+		local icon = self.mapBlipIcons[mapblip]
 	end
 end
 
@@ -296,33 +265,33 @@ function GUIMinimapFrame.AlertNewMapBlip(mapblip)
 		--	Log("Player map blip! its client index: %s, the local player's: %s", clientIndex, Client.GetLocalPlayer().clientIndex)
 		--end
 		local icon
-		if self[qMapBlipIcons][mapblip] then
-			icon = self[qMapBlipIcons][mapblip]
+		if self.mapBlipIcons[mapblip] then
+			icon = self.mapBlipIcons[mapblip]
 		else
 			icon = NewItem()
-			local freeslots = self[qNumFreeIconSlots]
-			local icons = self[qIcons]
+			local freeslots = self.numFreeIconSlots
+			local icons = self.icons
 			if freeslots == 0 then    -- no free slots, just expand array
 				push(icons, icon)
 			else
-				self[qNumFreeIconSlots] = freeslots - 1
-				local freeslot = self[qNextFreeIconSlot]
+				self.numFreeIconSlots = freeslots - 1
+				local freeslot = self.nextFreeIconSlot
 				assert(icons[freeslot] == false, "There isn't supposed to be an icon here!")
 				icons[freeslot] = icon
 				if freeslots > 1 then -- need to find free slot
-					for i = freeslot + 1, #icons do -- self[qNextFreeIconSlot] is always the lowest free icon slot
+					for i = freeslot + 1, #icons do -- self.nextFreeIconSlot is always the lowest free icon slot
 						if icons[i] == false then
-							self[qNextFreeIconSlot] = i
+							self.nextFreeIconSlot = i
 							break
 						end
 					end
 				else
-					self[qNextFreeIconSlot] = 2^52
+					self.nextFreeIconSlot = 2^52
 				end
 			end
 
-			self[qMapBlipIcons][mapblip] = icon
-			self[qMinimap]:AddChild(icon)
+			self.mapBlipIcons[mapblip] = icon
+			self.minimap:AddChild(icon)
 		end
 
 		local type = mapblip.type
@@ -335,7 +304,7 @@ function GUIMinimapFrame.AlertNewMapBlip(mapblip)
 		)[mapblip.team+1]
 		local coords = kClassGrid[kMinimapBlipType[mapblip.type]]
 		Log("New MapBlip with type %s", kMinimapBlipType[mapblip.type])
-		icon:SetSize(self[qIconSize])
+		icon:SetSize(self.iconSize)
 		icon:SetInheritsParentStencilSettings(true)
 		icon:SetColor(color)
 		icon:SetTexture(kIconTexture)
@@ -354,10 +323,10 @@ function GUIMinimapFrame:Initialize()
 	push(minimapframes, self)
 	
 	-- array of icons
-	self[qIcons] = {}
-	self[qMapBlipIcons] = setmetatable({}, {__mode = "kv"})
-	self[qNumFreeIconSlots] = 0
-	self[qNextFreeIconSlot] = 2^52
+	self.icons = {}
+	self.mapBlipIcons = setmetatable({}, {__mode = "kv"})
+	self.numFreeIconSlots = 0
+	self.nextFreeIconSlot = 2^52
 
 	do
 		local minimap = NewItem()
@@ -367,52 +336,52 @@ function GUIMinimapFrame:Initialize()
 		))
 		minimap:SetLayer(kGUILayerMinimap)
 		minimap:SetIsVisible(false)
-		self[qMinimap] = minimap
+		self.minimap = minimap
 	end
 
-	self[qZoom] = 1
+	self.zoom = 1
 	self:SetBackgroundMode(kModeBig)
 
 	self.updateInterval = 0
 end
 
 function GUIMinimapFrame:ShowMap(b)
-	self[qMinimap]:SetIsVisible(b)
+	self.minimap:SetIsVisible(b)
 end
 
 GUIMinimapFrame.SetIsVisible = GUIMinimapFrame.ShowMap
 
 function GUIMinimapFrame:GetIsVisible()
-	return self[qMinimap]:GetIsVisible()
+	return self.minimap:GetIsVisible()
 end
 
 function GUIMinimapFrame:SetBackgroundMode(mode)
-	if self[qMode] ~= mode then
-		self[qMode] = mode
-		self[qMinimap]:SetStencilFunc(mode == kModeZoom and GUIItem.NotEqual or GUIItem.Always)
+	if self.mode ~= mode then
+		self.mode = mode
+		self.minimap:SetStencilFunc(mode == kModeZoom and GUIItem.NotEqual or GUIItem.Always)
 		self:OnResolutionChanged()
 	end
 end
 
 -- Also SetDesiredZoom
 function GUIMinimapFrame:SetZoom(zoom)
-	self[qZoom] = zoom
+	self.zoom = zoom
 end
 
 GUIMinimapFrame.SetDesiredZoom = GUIMinimapFrame.SetZoom
 
 function GUIMinimapFrame:Uninitialize()
-	GUI.DestroyItem(self[qMinimap])
+	GUI.DestroyItem(self.minimap)
 end
 
 function GUIMinimapFrame:Update()
-	if self[qMode] == kModeZoom then
+	if self.mode == kModeZoom then
 		local player_pos = Client.GetLocalPlayer():GetOrigin()
 		local x, y       = PlotToMap(self, player_pos.x, player_pos.z)
-		self[qMinimap]:SetPosition(-Vector(x, y, 0))
+		self.minimap:SetPosition(-Vector(x, y, 0))
 	end
 
-	local icons = self[qIcons]
+	local icons = self.icons
 	for i = 1, #icons do
 		local icon = icons[i]
 		if icon ~= false then
@@ -429,8 +398,8 @@ function GUIMinimapFrame:Update()
 			else -- need to remove icon!
 				icons[i] = false
 				DestroyItem(icon)
-				self[qNumFreeIconSlots] = self[qNumFreeIconSlots] + 1
-				self[qNextFreeIconSlot] = math_min(self[qNextFreeIconSlot], i)
+				self.numFreeIconSlots = self.numFreeIconSlots + 1
+				self.nextFreeIconSlot = math_min(self.nextFreeIconSlot, i)
 			end
 		end
 	end
