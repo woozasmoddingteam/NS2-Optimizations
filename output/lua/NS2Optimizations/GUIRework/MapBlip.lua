@@ -15,15 +15,17 @@ MapBlip.kMapName = "MapBlip"
 
 local networkVars =
 {
-	m_origin = "position (by 0.2 [2 3 5], by 0.2 [2 3 5], by 0.2 [2 3 5]",
-    m_angles = "angles   (by 10 [0],      by 0.1 [3],     by 10 [0])",
+	m_origin = "interpolated position (by 0.2 [2 3 5], by 0.2 [2 3 5], by 0.2 [2 3 5]",
+    m_angles = "interpolated angles   (by 10 [0],      by 0.1 [3],     by 10 [0])",
 
-    type = "enum kMinimapBlipType",
-    team = "integer (" .. kTeamInvalid .. " to " .. kSpectatorIndex .. ")",
+    type            = "enum kMinimapBlipType",
+    team            = "integer (" .. kTeamInvalid .. " to " .. kSpectatorIndex .. ")",
 	isHallucination = "boolean",
 
-	inCombat        = "boolean",
-	active          = "boolean"
+	inCombat = "boolean",
+	active   = "boolean",
+
+	ownerId = "entityid",
 }
 
 if Server then
@@ -51,10 +53,23 @@ elseif Client then
 		AlertActivity(self)
 		AlertCombat(self)
 
-		self:SetUpdates(false)
+		self.old_active = self.active
+
+		self:SetUpdates(true)
 		self:AddFieldWatcher("type",        AlertNewMapBlip)
-		self:AddFieldWatcher("active",      AlertActivity)
+		--self:AddFieldWatcher("active",      self.AlertActivity)
 		self:AddFieldWatcher("inCombat",    AlertCombat)
+	end
+
+	function MapBlip:AlertActivity()
+		Log("AlertActivity(%s:%s)", self, kMinimapBlipType[self.type])
+	end
+
+	function MapBlip:OnUpdate()
+		if self.old_active ~= self.active then
+			self.old_active = self.active
+			Log("%s:%s.active <- %s", self, kMinimapBlipType[self.type], self.active)
+		end
 	end
 end
 
@@ -77,11 +92,11 @@ if Server then
 	end
 
 	function MapBlip:GetIsSighted()
-		local parent = self:GetParent()
-		if parent == nil then return false end
-		local GetIsSighted = parent.GetIsSighted
+		local owner = Shared.GetEntity(self.ownerId)
+		if owner == nil then return false end
+		local GetIsSighted = owner.GetIsSighted
 		if GetIsSighted == nil then return false end
-		return GetIsSighted(parent)
+		return GetIsSighted(owner)
 	end
 
 	function MapBlip:GetIsInCombat()

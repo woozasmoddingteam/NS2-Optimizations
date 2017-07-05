@@ -17,11 +17,6 @@ MapBlipMixin.optionalCallbacks =
     OnGetMapBlipInfo = "Override for getting the Map Blip Info",
 }
 
--- Why is this here? Well, a long time ago this key was actually an integer, which didn't work
--- because at the time the version of LuaJIT NS2 was using had some buggy optimisations for
--- entities, which segfaulted at non-string keys! Very fun.
-local qMapBlip = "mapBlip"
-
 function MapBlipMixin:__initmixin()
     assert(Server)
 
@@ -35,31 +30,41 @@ function MapBlipMixin:__initmixin()
 		mapBlip.type, mapBlip.team = type, team
 		self.mapBlip = mapBlip
 		mapBlip.ownerId = self:GetId()
+		self.__needs_connection = self:isa "Cyst" or self:isa "TunnelEntrance"
     
 		MapBlipMixin.SetOrigin(self, self:GetOrigin())
 		MapBlipMixin.SetAngles(self)
-		MapBlipMixin.SetIsSighted(self, self.sighted == true)
+		MapBlipMixin.OnSighted(self, self.sighted == true)
 		self:MarkBlipDirty()
+		if self:isa "PowerPoint" then
+			MapBlipMixin.SetInternalPowerState(self, self.powerState)
+		end
 	else
 		Log("Warning! %s does not have a map blip!", self)
 	end
-
-	self.__is_cyst = self:isa "Cyst"
 end
 
 function MapBlipMixin:OnDestroy()
-	Server.DestroyEntity(self[qMapBlip])
+	if self.mapBlip then
+		Server.DestroyEntity(self.mapBlip)
+	end
 end
 
+MapBlipMixin.OnKill = MapBlipMixin.OnDestroy
+
 local function checkActivity(self)
-	self[qMapBlip].active = GetIsUnitActive(self) and (self.__is_cyst == false or self.connected)
+	local old = self.mapBlip.active
+	self.mapBlip.active =
+		GetIsUnitActive(self) and
+		(self.__needs_connection == false or self.connected)
+	Log("%s (%s): %s -> %s", self.mapBlip, self, old, self.mapBlip.active)
 end
 for _, v in ipairs {"OnConstructionComplete", "OnPowerOn", "OnPowerOff", "OnKill", "MarkBlipDirty"} do
 	MapBlipMixin[v] = checkActivity
 end
 
 function MapBlipMixin:SetInternalPowerState(powerState)
-	local mapBlip = self[qMapBlip]
+	local mapBlip = self.mapBlip
 
 	if     powerState == PowerPoint.kPowerState.destroyed then
 		mapBlip.type = kMinimapBlipType.PowerPoint
@@ -73,41 +78,48 @@ function MapBlipMixin:SetInternalPowerState(powerState)
 end
 
 function MapBlipMixin:OnEnterCombat()
-	self[qMapBlip].inCombat = true
+	self.mapBlip.inCombat = true
 end
 
 function MapBlipMixin:OnLeaveCombat()
-	self[qMapBlip].inCombat = false
+	self.mapBlip.inCombat = false
 end
 
-function MapBlipMixin:SetIsSighted(sighted)
-	local mapBlip = self[qMapBlip]
-	if not mapBlip then Shared.Message(ToString(self) .. " has no map blip! SetIsSighted"); return end
-	if sighted then
-		mapBlip:SetExcludeRelevancyMask(bor(kRelevantToTeam1, kRelevantToTeam2))
-	elseif mapBlip.team == 1 then
-		mapBlip:SetExcludeRelevancyMask(kRelevantToTeam1)
-	elseif mapBlip.team == 2 then
-		mapBlip:SetExcludeRelevancyMask(kRelevantToTeam2)
-	else
-		mapBlip:SetExcludeRelevancyMask(bor(kRelevantToTeam1, kRelevantToTeam2))
+do
+	local Log = function() end
+	function MapBlipMixin:OnSighted(sighted)
+		local mapblip = self.mapBlip
+		if not mapblip then return end
+		if sighted then
+			Log("%s (%s) is now sighted!", mapblip, kMinimapBlipType[mapblip.type])
+			mapblip:SetExcludeRelevancyMask(bor(kRelevantToTeam1, kRelevantToTeam2))
+		elseif mapblip.team == 1 then
+			Log("%s (%s) is now not sighted!", mapblip, kMinimapBlipType[mapblip.type])
+			mapblip:SetExcludeRelevancyMask(kRelevantToTeam1)
+		elseif mapblip.team == 2 then
+			Log("%s (%s) is now not sighted!", mapblip, kMinimapBlipType[mapblip.type])
+			mapblip:SetExcludeRelevancyMask(kRelevantToTeam2)
+		else
+			Log("%s (%s) is now not sighted!", mapblip, kMinimapBlipType[mapblip.type])
+			mapblip:SetExcludeRelevancyMask(bor(kRelevantToTeam1, kRelevantToTeam2))
+		end
 	end
 end
 
 function MapBlipMixin:OnParasited()
-	self[qMapBlip].isParasited = true
+	self.mapBlip.isParasited = true
 end
 
 function MapBlipMixin:OnParasiteRemoved()
-	self[qMapBlip].isParasited = false
+	self.mapBlip.isParasited = false
 end
 
 function MapBlipMixin:SetControllerClient(client)
-	self[qMapBlip].clientIndex = client:GetId()
+	self.mapBlip.clientIndex = client:GetId()
 end
 
 function MapBlipMixin:SetCoords(coords)
-	self[qMapBlip]:SetAngles(Angles(0, atan2(coords.zAxis.x, coords.zAxis.z), 0))
+	self.mapBlip:SetAngles(Angles(0, atan2(coords.zAxis.x, coords.zAxis.z), 0))
 end
 
 local SetCoords = MapBlipMixin.SetCoords
@@ -117,7 +129,7 @@ function MapBlipMixin:SetAngles()
 end
 
 function MapBlipMixin:SetOrigin()
-	local mapBlip = self[qMapBlip]
+	local mapBlip = self.mapBlip
 	if mapBlip == nil then return end
 	local tunnel  = self.inTunnel
 	local origin  = self:GetOrigin()

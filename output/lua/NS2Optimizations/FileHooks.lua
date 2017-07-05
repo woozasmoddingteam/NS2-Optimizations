@@ -254,6 +254,8 @@ for _, v in ipairs {
 	"GUIScript",
 	"GUIChat",
 	"TunnelEntrance",
+	"Tunnel",
+	"TunnelUserMixin",
 	"Globals",
 } do
 	ModLoader.SetupFileHook("lua/"..v..".lua", "lua/NS2Optimizations/GUIRework/"..v..".lua", "post")
