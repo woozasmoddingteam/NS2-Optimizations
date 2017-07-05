@@ -207,15 +207,17 @@ local function Update(deltaTime)
 	end
 end
 
-function GUIManager:SendKeyEvent(key, down, amount)
-	if not Shared.GetIsRunningPrediction() then
-		for i = 1, #scripts do
-			if scripts[i]:SendKeyEvent(key, down, amount) then
-				return true
+if not Shared.GetIsRunningPrediction() then
+	function GUIManager:SendKeyEvent(key, down, amount)
+			for i = 1, #scripts do
+				if scripts[i]:SendKeyEvent(key, down, amount) then
+					return true
+				end
 			end
-		end
+		return false
 	end
-	return false
+else
+	function GUIManager.SendKeyEvent() end
 end
 
 function GUIManager:SendCharacterEvent(c)
@@ -229,7 +231,7 @@ end
 
 function GUIManager:OnResolutionChanged(x1, y1, x2, y2)
 	for i = 1, #scripts do
-		scripts[i]:SendCharacterEvent(x1, y1, x2, y2)
+		scripts[i]:OnResolutionChanged(x1, y1, x2, y2)
 	end
 end
 
