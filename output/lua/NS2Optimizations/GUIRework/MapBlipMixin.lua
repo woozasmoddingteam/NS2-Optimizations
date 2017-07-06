@@ -54,7 +54,7 @@ MapBlipMixin.OnKill = MapBlipMixin.OnDestroy
 
 local function checkActivity(self)
 	local old = self.mapBlip.active
-	self.mapBlip.active =
+	self.mapBlip.active = 
 		GetIsUnitActive(self) and
 		(self.__needs_connection == false or self.connected)
 	Log("%s (%s): %s -> %s", self.mapBlip, self, old, self.mapBlip.active)

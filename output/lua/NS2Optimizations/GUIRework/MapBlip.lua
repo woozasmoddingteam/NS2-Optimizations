@@ -15,8 +15,10 @@ MapBlip.kMapName = "MapBlip"
 
 local networkVars =
 {
-	m_origin = "interpolated position (by 0.2 [2 3 5], by 0.2 [2 3 5], by 0.2 [2 3 5]",
-    m_angles = "interpolated angles   (by 10 [0],      by 0.1 [3],     by 10 [0])",
+	m_origin = "interpolated position (by 0.2 [2 3 5], by 0.2 [2 3 5], by 0.2 [2 3 5])",
+    m_angles = "interpolated angles   (by 10000 [0],   by 0.1 [3],     by 10000 [0])",
+	m_parentId = "integer (-1 to -1)",
+	m_attachPoint = "integer (-1 to -1)",
 
     type            = "enum kMinimapBlipType",
     team            = "integer (" .. kTeamInvalid .. " to " .. kSpectatorIndex .. ")",
@@ -50,26 +52,13 @@ elseif Client then
 			AlertCombat      = GUIMinimapFrame.AlertCombat
 		end
 		AlertNewMapBlip(self)
-		AlertActivity(self)
+		--AlertActivity(self)
 		AlertCombat(self)
 
-		self.old_active = self.active
-
-		self:SetUpdates(true)
+		self:SetUpdates(false)
 		self:AddFieldWatcher("type",        AlertNewMapBlip)
-		--self:AddFieldWatcher("active",      self.AlertActivity)
+		--self:AddFieldWatcher("active",      AlertActivity)
 		self:AddFieldWatcher("inCombat",    AlertCombat)
-	end
-
-	function MapBlip:AlertActivity()
-		Log("AlertActivity(%s:%s)", self, kMinimapBlipType[self.type])
-	end
-
-	function MapBlip:OnUpdate()
-		if self.old_active ~= self.active then
-			self.old_active = self.active
-			Log("%s:%s.active <- %s", self, kMinimapBlipType[self.type], self.active)
-		end
 	end
 end
 

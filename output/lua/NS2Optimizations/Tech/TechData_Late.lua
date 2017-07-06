@@ -30,11 +30,7 @@ for i = #tech_data_src, 1, -1 do
 end
 
 local function set(f, v)
-	local i = 1
-	while assert(debug.getupvalue(f, i), "No such value!") ~= "actual" do
-		i = i + 1
-	end
-	debug.setupvalue(f, i, v)
+	setupvalue(f, "actual", v)
 end
 
 set(LookupTechId_NS2Opti, function(data, field)

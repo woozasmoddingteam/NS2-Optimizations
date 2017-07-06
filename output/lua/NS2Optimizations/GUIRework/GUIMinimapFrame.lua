@@ -156,18 +156,11 @@ end
 
 -- Function used for inactive icons
 local function ColorInactive(c)
-	c.r = c.r / 2
-	c.g = c.g / 2
-	c.b = c.b / 2
-	return c
-end
-
--- Function used to make inactive icons active again
-local function ColorActive(c)
-	c.r = c.r * 2
-	c.g = c.g * 2
-	c.b = c.b * 2
-	return c
+	return Color(
+		c.r / 2,
+		c.g / 2,
+		c.b / 2
+	)
 end
 
 local kIconLayers = table.array(#kMinimapBlipType)
@@ -275,7 +268,9 @@ end
 
 local minimapframes = {}
 
+--[[
 function GUIMinimapFrame.AlertActivity(mapblip)
+	Log("AlertActivity(%s:%s)", mapblip, kMinimapBlipType[mapblip.type])
 	for _, self in ipairs(minimapframes) do
 		local icon = self.mapBlipIcons[mapblip]
 		if icon == nil then
@@ -283,18 +278,19 @@ function GUIMinimapFrame.AlertActivity(mapblip)
 			icon = self.mapBlipIcons[mapblip]
 		end
 		local activity = mapblip.active
-		local prev_activity = icon.active
-		local prev_color = icon:GetColor()
-		if icon.active ~= activity then
-			icon.active = activity
+		--local prev_activity = icon.active
+		--local prev_color = icon:GetColor()
+		--if icon.active ~= activity then
+			--icon.active = activity
 			if activity then
 				icon:SetColor(ColorForMapBlip(mapblip))
 			else
 				icon:SetColor(Color(0.5, 0.5, 0.5))
 			end
-		end
+		--end
 	end
 end
+--]]
 
 function GUIMinimapFrame.AlertCombat(mapblip)
 	for _, self in ipairs(minimapframes) do
@@ -328,26 +324,7 @@ function GUIMinimapFrame.AlertNewMapBlip(mapblip)
 		end
 		if icon == nil then
 			icon = NewItem()
-			local freeslots = self.numFreeIconSlots
-			local icons = self.icons
-			if freeslots == 0 then    -- no free slots, just expand array
-				push(icons, icon)
-			else
-				self.numFreeIconSlots = freeslots - 1
-				local freeslot = self.nextFreeIconSlot
-				assert(icons[freeslot] == false, "There isn't supposed to be an icon here!")
-				icons[freeslot] = icon
-				if freeslots > 1 then -- need to find free slot
-					for i = freeslot + 1, #icons do -- self.nextFreeIconSlot is always the lowest free icon slot
-						if icons[i] == false then
-							self.nextFreeIconSlot = i
-							break
-						end
-					end
-				else
-					self.nextFreeIconSlot = 2^52
-				end
-			end
+			self.icons:Append(icon)
 
 			icon:SetInheritsParentStencilSettings(true)
 			icon:SetTexture(kIconTexture)
@@ -377,8 +354,13 @@ function GUIMinimapFrame:Initialize()
 	push(minimapframes, self)
 	
 	-- array of icons
-	self.icons = {}
-	self.mapBlipIcons = setmetatable({}, {__mode = "kv"})
+	self.icons = DynArray(32)
+	--self.icons.array = table.array(32)
+	--self.icons.next  = 2^52
+	--self.icons.free  = 0
+	self.connectors = DynArray(8)
+	self.mapBlipIcons = WkvTable {}
+	self.connectorConnectors = WkvTable {}
 	self.numFreeIconSlots = 0
 	self.nextFreeIconSlot = 2^52
 
@@ -435,41 +417,43 @@ function GUIMinimapFrame:Update()
 	end
 
 	local icons = self.icons
-	for i = 1, #icons do
-		local icon = icons[i]
-		if icon ~= false then
-			local mapblip = Shared.GetEntity(icon.mapBlipId)
-			if self.mapBlipIcons[mapblip] ~= icon then
-				-- Can happen if an entity leaves and reenters relevancy
-				-- without the original icon being processed.
-				-- Also handles removing icons for non-existent mapblips.
-				icons[i] = false
-				DestroyItem(icon)
-				self.numFreeIconSlots = self.numFreeIconSlots + 1
-				self.nextFreeIconSlot = math_min(self.nextFreeIconSlot, i)
-			else
-				local origin
-				local owner = Shared.GetEntity(mapblip.ownerId)
-				icon:SetRotation(Vector(0, 0, mapblip:GetAngles().yaw))
-				-- Owner is relevant; we don't need to rely on the mapblip's inaccurate netvars
-				-- Computing atan2 is expensive though, so we don't do it client-side
-				if owner ~= nil then
-					origin = owner:GetOrigin()
-					if origin.z > -1640 and origin.z < -1560 and origin.y > 160 and origin.y < 240 then -- is inside tunnel
-						local tunnel = GetIsPointInGorgeTunnel(origin)
-						if tunnel then
-							origin = tunnel:GetRelativePosition(origin)
-						end
+	for i, icon in icons:Iterate() do
+		local mapblip = Shared.GetEntity(icon.mapBlipId)
+		if self.mapBlipIcons[mapblip] ~= icon then
+			-- Can happen if an entity leaves and reenters relevancy
+			-- without the original icon being processed.
+			-- Also handles removing icons for non-existent mapblips.
+			icons:Free(i)
+		else
+			local origin
+			local owner = Shared.GetEntity(mapblip.ownerId)
+			icon:SetRotation(Vector(0, 0, mapblip:GetAngles().yaw))
+			-- Owner is relevant; we don't need to rely on the mapblip's inaccurate netvars
+			-- Computing atan2 is expensive though, so we don't do it client-side
+			if owner ~= nil then
+				origin = owner:GetOrigin()
+				if origin.z >= -1640 and origin.z <= -1560 and origin.y >= 160 and origin.y <= 240 then -- is inside tunnel
+					local tunnel = GetIsPointInGorgeTunnel(origin)
+					if tunnel then
+						origin = tunnel:GetRelativePosition(origin)
 					end
-				else
-					origin = mapblip:GetOrigin()
 				end
-				origin.z, origin.x, origin.y = origin.y, PlotToMap(self, origin.x, origin.z)
-				--origin.z           = 0
-				local size         = icon:GetSize()
-				origin.x           = origin.x - size.x/2
-				origin.y           = origin.y - size.y/2
-				icon:SetPosition(origin)
+			else
+				origin = mapblip:GetOrigin()
+			end
+			origin.z, origin.x, origin.y = origin.y, PlotToMap(self, origin.x, origin.z)
+			--origin.z           = 0
+			local size         = icon:GetSize()
+			origin.x           = origin.x - size.x/2
+			origin.y           = origin.y - size.y/2
+			icon:SetPosition(origin)
+			if icon.active ~= mapblip.active then
+				icon.active = mapblip.active
+				if mapblip.active then
+					icon:SetColor(ColorForMapBlip(mapblip))
+				else
+					icon:SetColor(Color(0.5, 0.5, 0.5))
+				end
 			end
 		end
 	end

@@ -1,50 +1,40 @@
-local function setupvalue(f, n, v)
-	local i = 1
-	while assert(debug.getupvalue(f, i)) ~= n do
-		i = i + 1
-	end
-	debug.setupvalue(f, i, v)
-end
+local Cinematic = Cinematic
+local RenderScene = RenderScene
+local Shared = Shared
+local Client = Client
+local Server = Server
 
-local function getupvalue(f, n, v)
-	local i = 1
-	while assert(debug.getupvalue(f, i)) ~= n do
-		i = i + 1
-	end
-	local _, v = debug.getupvalue(f, i)
-	return v
-end
+local old = getupvalue(TunnelUserMixin.OnProcessSpectate, "UpdateTunnelEffects")
+local kTunnelUseScreenCinematic = getupvalue(old, "kTunnelUseScreenCinematic")
+local function UpdateTunnelEffects(self)
 
-do
-	local function UpdateTunnelEffects(self)
+	local isInTunnel = self.inTunnel
 
-		local isInTunnel = self.inTunnel
-
-		if self.clientIsInTunnel ~= isInTunnel then
+	if self.clientIsInTunnel ~= isInTunnel then
+	
+		local cinematic = Client.CreateCinematic(RenderScene.Zone_ViewModel)
+		cinematic:SetCinematic(kTunnelUseScreenCinematic)
+		cinematic:SetRepeatStyle(Cinematic.Repeat_None)
 		
-			local cinematic = Client.CreateCinematic(RenderScene.Zone_ViewModel)
-			cinematic:SetCinematic(kTunnelUseScreenCinematic)
-			cinematic:SetRepeatStyle(Cinematic.Repeat_None)
-			
-			if isInTunnel then
-				self:TriggerEffects("tunnel_enter_2D")
-			else
-				self:TriggerEffects("tunnel_exit_2D")
-			end
-			
-			self.clientIsInTunnel = isInTunnel
-			self.clientTimeTunnelUsed = Shared.GetTime()
-		
+		if isInTunnel then
+			self:TriggerEffects("tunnel_enter_2D")
+		else
+			self:TriggerEffects("tunnel_exit_2D")
 		end
-
+		
+		self.clientIsInTunnel = isInTunnel
+		self.clientTimeTunnelUsed = Shared.GetTime()
+	
 	end
-	setupvalue(TunnelUserMixin.OnProcessSpectate, "UpdateTunnelEffects", UpdateTunnelEffects)
+
 end
+setupvalue(TunnelUserMixin.OnProcessSpectate, "UpdateTunnelEffects", UpdateTunnelEffects)
 
 do
 	local old = getupvalue(TunnelUserMixin.OnUpdate, "SharedUpdate")
 	local UpdateSinkIn = getupvalue(old, "UpdateSinkIn")
 	local UpdateExitTunnel = getupvalue(old, "UpdateExitTunnel")
+	local kTunnelUseTimeout = getupvalue(old, "kTunnelUseTimeout")
 
 	if Server then
 		local function SharedUpdate(self, deltaTime)

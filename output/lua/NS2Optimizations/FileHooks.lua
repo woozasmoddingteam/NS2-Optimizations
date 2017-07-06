@@ -242,10 +242,8 @@ for _, v in ipairs {
 	"GUIMinimapFrame",
 	"MapBlip",
 	"MapBlipMixin",
-	--"MinimapMappableMixin",
-	--"MinimapConnectionMixin",
-	--"MapConnector",
-	--"GUIMinimapButtons",
+	"MapConnector",
+	"MinimapConnectionMixin",
 } do
 	ModLoader.SetupFileHook("lua/"..v..".lua", "lua/NS2Optimizations/GUIRework/"..v..".lua", "replace")
 end
@@ -256,7 +254,9 @@ for _, v in ipairs {
 	"TunnelEntrance",
 	"Tunnel",
 	"TunnelUserMixin",
+	"PhaseGate",
 	"Globals",
+	"GUIMinimapConnection",
 } do
 	ModLoader.SetupFileHook("lua/"..v..".lua", "lua/NS2Optimizations/GUIRework/"..v..".lua", "post")
 end

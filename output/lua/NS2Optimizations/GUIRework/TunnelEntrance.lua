@@ -4,15 +4,6 @@ if Server then
 	local GetEntitiesWithMixinWithinRange = GetEntitiesWithMixinWithinRange
 	local DestroyEntity = DestroyEntity
 
-	local function getupvalue(f, n)
-		local i = 1
-		while assert(debug.getupvalue(f, i)) ~= n do
-			i = i + 1
-		end
-		local _, v = debug.getupvalue(f, i)
-		return v
-	end
-
 	local old = TunnelEntrance.OnUpdate
 	local ComputeDestinationLocationId = getupvalue(old, "ComputeDestinationLocationId")
 	local CheckForClogs                = getupvalue(old, "CheckForClogs")
