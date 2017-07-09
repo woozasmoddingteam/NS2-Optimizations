@@ -17,6 +17,7 @@ An icon is the icon that represents an entity on the map, e.g. a tech point, a p
 Script.Load "lua/GUIMinimapConnection.lua"
 Script.Load "lua/MinimapMappableMixin.lua"
 Script.Load "lua/GUIManager.lua"
+Script.Load "lua/Hud/Marine/GUIMarineHUD.lua"
 
 local Shared            = Shared
 local Client            = Client
@@ -46,6 +47,7 @@ local left              = GUIItem.Left
 local right             = GUIItem.Right
 local atan2             = math.atan2
 local cos               = math.cos
+local abs               = math.abs
 local pi                = math.pi
 local type              = type
 
@@ -240,13 +242,13 @@ local kIconHeight  = 32
 
 local kLineTexture = "ui/mapconnector_line.dds"
 
-local kMinimapOrigin_x = Client.minimapExtentOrigin.x
-local kMinimapOrigin_z = Client.minimapExtentOrigin.z
+local kMapOrigin_x = Client.minimapExtentOrigin.x
+local kMapOrigin_z = Client.minimapExtentOrigin.z
 local kMapSize  = Client.minimapExtentScale.x
 local kMapScale = kMapSize / 400
 
 local kModeZoom_x_max = GUIMarineHUD.kMinimapBackgroundSize.x / 2 + 24
-local kModeZoom_y_max = GUIMarineHud.kMinimapBackgroundSize.y / 2 + 24
+local kModeZoom_y_max = GUIMarineHUD.kMinimapBackgroundSize.y / 2 + 24
 
 Event.Hook("Console_mapinfo", function()
 	Log("Size: %s\nCenter: %s", Client.minimapExtentScale, Client.minimapExtentOrigin)
@@ -273,8 +275,8 @@ end
 
 local function PlotToMap(self, x, z)
 	return
-		(z - kMinimapOrigin_z) * self.minimapPlotScale,
-		(kMinimapOrigin_x - x) * self.minimapPlotScale
+		(z - kMapOrigin_z) * self.minimapPlotScale,
+		(kMapOrigin_x - x) * self.minimapPlotScale
 end
 
 -- Yes, bad naming
@@ -403,16 +405,17 @@ function GUIMinimapFrame.AlertConnectorTarget(mapblip)
 	end
 end
 
-local function AlertCombat(self, mapblip)
+local function ResetColor(self, mapblip)
 	local icon = self.icons:Get(mapblip)
 	if icon == nil then
 		return
 	end
-	icon.combatant = mapblip.combatant and Shared.GetTime()
+	icon:SetColor(ColorForMapBlip(mapblip)) -- Reset color
+	icon.active = true
 end
 function GUIMinimapFrame.AlertCombat(mapblip)
 	for _, self in ipairs(minimapframes) do
-		AlertCombat(self, mapblip)
+		ResetColor(self, mapblip)
 	end
 end
 
@@ -421,7 +424,6 @@ local function AlertParasite(self, mapblip)
 	if icon == nil then
 		return
 	end
-	local combat = mapblip.combatant
 	icon.parasited = mapblip.parasited
 end
 
@@ -459,7 +461,7 @@ local function AlertNewMapBlip(self, mapblip)
 	local color = ColorForMapBlip(mapblip)
 	local coords = kClassGrid[kType[type]]
 	icon:SetSize(self.iconSizes[type])
-	if kEternals[type] then
+	if kEternalIcons[type] then
 		local size = self.iconSizes[type]
 		PositionIcon(self, mapblip:GetOrigin(), icon)
 	end
@@ -470,8 +472,6 @@ local function AlertNewMapBlip(self, mapblip)
 	icon.active   = true
 	icon.type     = type
 	icon.combatant = false
-
-	AlertCombat(self, mapblip)
 end
 
 -- Also used for when mapblips change type
@@ -512,7 +512,6 @@ function GUIMinimapFrame:Initialize()
 	local mapblips = Shared.GetEntitiesWithClassname "MapBlip"
 	for _, mapblip in ientitylist(mapblips) do
 		AlertNewMapBlip(self, mapblip)
-		AlertCombat(self, mapblip)
 		if mapblip:isa "PlayerMapBlip" then
 			AlertParasite(self, mapblip)
 		elseif mapblip:isa "ConnectorMapBlip" then
@@ -600,105 +599,118 @@ function GUIMinimapFrame:Uninitialize()
 	GUI.DestroyItem(self.minimap)
 end
 
-function GUIMinimapFrame:Update()
-	local local_player = Client.GetLocalPlayer()
-	local team = local_player:GetTeamNumber()
-	local time = Shared.GetTime()
-
-	if self.mode == kModeZoom then
-		local player_pos = local_player:GetOrigin()
-		local x, y       = PlotToMap(self, player_pos.x, player_pos.z)
-		self.minimap:SetPosition(-Vector(x, y, 0))
+do
+	local function UpdateIcon(self, anim, icons, origin, mapblip, icon)
+		icon:SetRotation(Vector(0, 0, mapblip:GetAngles().yaw))
+		local owner = Shared.GetEntity(mapblip.ownerId)
+		-- Owner is relevant; we don't need to rely on the mapblip's inaccurate netvars
+		-- Computing atan2 is expensive though, so we don't do it client-side
+		if owner ~= nil then
+			local porigin = owner:GetOrigin()
+			if porigin.z - kMapOrigin_z < kMapSize and porigin.x - kMapOrigin_x < kMapSize then -- Make sure it's within the map
+				origin.x, origin.y = PlotToMap(self, porigin.x, porigin.z)
+			end
+		end
+		PositionIcon2(self, origin, icon)
+		if icon.active ~= mapblip.active then
+			icon.active = mapblip.active
+			local color = ColorForMapBlip(mapblip)
+			icon:SetColor(mapblip.active and color or ColorInactive(color))
+		end
+		if mapblip.combatant then
+			local color = icon:GetColor()
+			color.r = color.r * (2 - anim)
+			color.g = color.g * anim
+			color.b = color.b * anim
+			icon:SetColor(color)
+		end
 	end
 
-	local icons      = self.icons
-	local connectors = self.connectors
-	local scans      = self.scans
+	function GUIMinimapFrame:Update()
+		local local_player = Client.GetLocalPlayer()
+		local team = local_player:GetTeamNumber()
+		local time = Shared.GetTime()
 
-	for i, icon in icons:Iterate() do
-		local mapblip = Shared.GetEntity(icon.mapBlipId)
-		if icons:Get(mapblip) ~= icon then
-			-- Can happen if an entity leaves and reenters relevancy
-			-- without the original icon being processed.
-			-- Also handles removing icons for non-existent mapblips.
-			DestroyItem(icon)
-			icons:Free(i)
+		local icons      = self.icons
+		local connectors = self.connectors
+		local scans      = self.scans
+
+		local combat_animation = cos(time * 10) * 0.5 + 0.5
+
+		if self.mode == kModeZoom then
+			local player_pos = local_player:GetOrigin()
+			local x, y       = PlotToMap(self, player_pos.x, player_pos.z)
+			self.minimap:SetPosition(-Vector(x, y, 0))
+			for i, icon in icons:Iterate() do
+				local mapblip = Shared.GetEntity(icon.mapBlipId)
+				if icons:Get(mapblip) ~= icon then
+					-- Can happen if an entity leaves and reenters relevancy
+					-- without the original icon being processed.
+					-- Also handles removing icons for non-existent mapblips.
+					DestroyItem(icon)
+					icons:Free(i)
+				else
+					local origin = mapblip:GetOrigin()
+					origin.z, origin.x, origin.y = 0, PlotToMap(self, origin.x, origin.z)
+					-- Don't do this if it's too far away
+					if abs(origin.x - x) < kModeZoom_x_max and abs(origin.y - y) < kModeZoom_y_max then
+						UpdateIcon(self, combat_animation, icons, origin, mapblip, icon)
+					end
+				end
+			end
 		else
-			local origin
-			local owner = Shared.GetEntity(mapblip.ownerId)
-			icon:SetRotation(Vector(0, 0, mapblip:GetAngles().yaw))
-			-- Owner is relevant; we don't need to rely on the mapblip's inaccurate netvars
-			-- Computing atan2 is expensive though, so we don't do it client-side
-			origin = mapblip:GetOrigin()
-			local x, y = PlotToMap(self, origin.x, origin.z)
-			-- Don't do this if it's too far away
-			if abs(origin.x) < kModeZoom_x_max and abs(origin.y) < kModeZoom_y_max then
-				if owner ~= nil then
-					origin = owner:GetOrigin()
-					if origin.z >= -1640 and origin.z <= -1560 and origin.y >= 160 and origin.y <= 240 then -- is inside tunnel
-						local tunnel = GetIsPointInGorgeTunnel(origin)
-						if tunnel then
-							origin = tunnel:GetRelativePosition(origin)
-						end
-					end
-				end
-				PositionIcon(self, origin, icon)
-				if icon.active ~= mapblip.active then
-					icon.active = mapblip.active
-					local color = ColorForMapBlip(mapblip)
-					if mapblip.active then
-						icon:SetColor(color)
-					else
-						icon:SetColor(ColorInactive(color))
-					end
-				end
-				local combatant = icon.combatant
-				if combatant then
-					local color = icon:GetColor()
-					local anim  = (cos((time - combatant) * 10) + 1) * 0.5
-					color.r = color.r * (2 - anim)
-					color.g = color.g * anim
-					color.b = color.b * anim
-					icon:SetColor(color)
+			for i, icon in icons:Iterate() do
+				local mapblip = Shared.GetEntity(icon.mapBlipId)
+				if icons:Get(mapblip) ~= icon then
+					-- Can happen if an entity leaves and reenters relevancy
+					-- without the original icon being processed.
+					-- Also handles removing icons for non-existent mapblips.
+					DestroyItem(icon)
+					icons:Free(i)
+				else
+					local origin = mapblip:GetOrigin()
+					origin.z, origin.x, origin.y = 0, PlotToMap(self, origin.x, origin.z)
+					UpdateIcon(self, time, icons, origin, mapblip, icon)
 				end
 			end
 		end
-	end
 
-	if team == 1 then
-		local animation = time % 1 * -64
-		for i, connector in connectors:Iterate() do
-			local mapblip = Shared.GetEntity(connector.mapBlipId)
-			if connectors:Get(mapblip) ~= connector then
-				DestroyItem(connector)
-				connectors:Free(i)
-			else
-				connector:SetTexturePixelCoordinates(animation, 16, animation + connector.length, 32)
+		if team == 1 then
+			local animation = time % 1 * -64
+			for i, connector in connectors:Iterate() do
+				local mapblip = Shared.GetEntity(connector.mapBlipId)
+				if connectors:Get(mapblip) ~= connector then
+					DestroyItem(connector)
+					connectors:Free(i)
+				else
+					connector:SetTexturePixelCoordinates(animation, 16, animation + connector.length, 32)
+				end
+			end
+		else
+			for i, connector in connectors:Iterate() do
+				local mapblip = Shared.GetEntity(connector.mapBlipId)
+				if connectors:Get(mapblip) ~= connector then
+					DestroyItem(connector)
+					connectors:Free(i)
+				end
 			end
 		end
-	else
-		for i, connector in connectors:Iterate() do
-			local mapblip = Shared.GetEntity(connector.mapBlipId)
-			if connectors:Get(mapblip) ~= connector then
-				DestroyItem(connector)
-				connectors:Free(i)
-			end
-		end
-	end
 
-	if team == 1 then
-		local animation = time / 2 % 1
-		local size = Vector(1 + animation * 9, 1 + animation * 9, 0)
-		local color = Color(kScanColor.r, kScanColor.g, kScanColor.b, (1 - animation)^2)
-		for i, scan in scans:Iterate() do
-			local mapblip = Shared.GetEntity(scan.mapBlipId)
-			if scans:Get(mapblip) ~= scan then
-				DestroyItem(scan)
-				scans:Free(i)
-			else
-				scan:SetSize(size)
-				scan:SetColor(color)
-				PositionIcon(self, mapblip:GetOrigin(), scan)
+		-- Aliens don't have scans
+		if team == 1 then
+			local animation = time / 2 % 1
+			local size = Vector(1 + animation * 9, 1 + animation * 9, 0)
+			local color = Color(kScanColor.r, kScanColor.g, kScanColor.b, (1 - animation)^2)
+			for i, scan in scans:Iterate() do
+				local mapblip = Shared.GetEntity(scan.mapBlipId)
+				if scans:Get(mapblip) ~= scan then
+					DestroyItem(scan)
+					scans:Free(i)
+				else
+					scan:SetSize(size)
+					scan:SetColor(color)
+					PositionIcon(self, mapblip:GetOrigin(), scan)
+				end
 			end
 		end
 	end

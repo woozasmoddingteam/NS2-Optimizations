@@ -129,6 +129,8 @@ end
 
 Shared.LinkClassToMap("PlayerMapBlip", PlayerMapBlip.kMapName, playerNetworkVars)
 
+class "ConnectorMapBlip" (MapBlip)
+
 ConnectorMapBlip.kMapName = "connectormapblip"
 
 if Client then

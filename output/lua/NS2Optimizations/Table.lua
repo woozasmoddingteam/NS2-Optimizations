@@ -89,7 +89,7 @@ function table.find(findTable, value)
 		end
 	end
 
-	 return nil
+	return nil
 
 end
 
