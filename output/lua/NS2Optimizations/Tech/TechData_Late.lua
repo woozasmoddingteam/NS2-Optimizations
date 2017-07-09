@@ -29,6 +29,8 @@ for i = #tech_data_src, 1, -1 do
 	end
 end
 
+kTechData[kTechId.Web][kTechDataCostKey] = kWebBuildCost
+
 local function set(f, v)
 	setupvalue(f, "actual", v)
 end
