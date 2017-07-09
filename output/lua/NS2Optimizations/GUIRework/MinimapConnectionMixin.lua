@@ -11,19 +11,21 @@ MinimapConnectionMixin = {
 }
 
 function MinimapConnectionMixin:SetConnectionStartPoint(point)
+	error "Disabled!"
 	if point ~= nil then
 		if self.__mapconnector == nil then
 			local mapconnector = Server.CreateEntity(MapConnector.kMapName)
 			mapconnector:SetRelevancyDistance(Math.infinity)
+			mapconnector.team = self:GetTeamNumber()
 
 			local mask = 0
-			
+
 			if self:GetTeamNumber() == kTeam1Index then
 				mask = kRelevantToTeam1
 			elseif self:GetTeamNumber() == kTeam2Index then
 				mask = kRelevantToTeam2
 			end
-				
+
 			mapconnector:SetExcludeRelevancyMask(mask)
 			self.__mapconnector = mapconnector
 		end
@@ -35,6 +37,7 @@ function MinimapConnectionMixin:SetConnectionStartPoint(point)
 end
 
 function MinimapConnectionMixin:SetConnectionEndPoint(point)
+	error "Disabled!"
 	self.__mapconnector.endPoint = point
 end
 

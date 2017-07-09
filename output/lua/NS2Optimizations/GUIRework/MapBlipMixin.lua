@@ -22,7 +22,13 @@ function MapBlipMixin:__initmixin()
 
 	local type, team = self:GetMapBlipInfo()
 	if type then
-		local mapName = self:isa("Player") and PlayerMapBlip.kMapName or MapBlip.kMapName
+		Shared.Message(ToString(self))
+		local mapName =
+			self:isa "Player" and PlayerMapBlip.kMapName
+			or
+			(self:isa "Tunnel" or self:isa "PhaseGate") and ConnectorMapBlip.kMapName
+			or
+			MapBlip.kMapName
 
 		local mapBlip = Server.CreateEntity(mapName)
 
@@ -31,7 +37,8 @@ function MapBlipMixin:__initmixin()
 		self.mapBlip = mapBlip
 		mapBlip.ownerId = self:GetId()
 		self.__needs_connection = self:isa "Cyst" or self:isa "TunnelEntrance"
-    
+		self.__no_angle         = self:isa "PowerPoint"
+
 		MapBlipMixin.SetOrigin(self, self:GetOrigin())
 		MapBlipMixin.SetAngles(self)
 		MapBlipMixin.OnSighted(self, self.sighted == true)
@@ -54,10 +61,11 @@ MapBlipMixin.OnKill = MapBlipMixin.OnDestroy
 
 local function checkActivity(self)
 	local old = self.mapBlip.active
-	self.mapBlip.active = 
+	if old ~=
 		GetIsUnitActive(self) and
-		(self.__needs_connection == false or self.connected)
-	Log("%s (%s): %s -> %s", self.mapBlip, self, old, self.mapBlip.active)
+		(self.__needs_connection == false or self.connected) then
+		self.mapBlip.active = not old
+	end
 end
 for _, v in ipairs {"OnConstructionComplete", "OnPowerOn", "OnPowerOff", "OnKill", "MarkBlipDirty"} do
 	MapBlipMixin[v] = checkActivity
@@ -78,40 +86,33 @@ function MapBlipMixin:SetInternalPowerState(powerState)
 end
 
 function MapBlipMixin:OnEnterCombat()
-	self.mapBlip.inCombat = true
+	self.mapBlip.combatant = true
 end
 
 function MapBlipMixin:OnLeaveCombat()
-	self.mapBlip.inCombat = false
+	self.mapBlip.combatant = false
 end
 
-do
-	local Log = function() end
-	function MapBlipMixin:OnSighted(sighted)
-		local mapblip = self.mapBlip
-		if not mapblip then return end
-		if sighted then
-			Log("%s (%s) is now sighted!", mapblip, kMinimapBlipType[mapblip.type])
-			mapblip:SetExcludeRelevancyMask(bor(kRelevantToTeam1, kRelevantToTeam2))
-		elseif mapblip.team == 1 then
-			Log("%s (%s) is now not sighted!", mapblip, kMinimapBlipType[mapblip.type])
-			mapblip:SetExcludeRelevancyMask(kRelevantToTeam1)
-		elseif mapblip.team == 2 then
-			Log("%s (%s) is now not sighted!", mapblip, kMinimapBlipType[mapblip.type])
-			mapblip:SetExcludeRelevancyMask(kRelevantToTeam2)
-		else
-			Log("%s (%s) is now not sighted!", mapblip, kMinimapBlipType[mapblip.type])
-			mapblip:SetExcludeRelevancyMask(bor(kRelevantToTeam1, kRelevantToTeam2))
-		end
+function MapBlipMixin:OnSighted(sighted)
+	local mapblip = self.mapBlip
+	if not mapblip then return end
+	if sighted then
+		mapblip:SetExcludeRelevancyMask(bor(kRelevantToTeam1, kRelevantToTeam2))
+	elseif mapblip.team == 1 then
+		mapblip:SetExcludeRelevancyMask(kRelevantToTeam1)
+	elseif mapblip.team == 2 then
+		mapblip:SetExcludeRelevancyMask(kRelevantToTeam2)
+	else
+		mapblip:SetExcludeRelevancyMask(bor(kRelevantToTeam1, kRelevantToTeam2))
 	end
 end
 
 function MapBlipMixin:OnParasited()
-	self.mapBlip.isParasited = true
+	self.mapBlip.parasited = true
 end
 
 function MapBlipMixin:OnParasiteRemoved()
-	self.mapBlip.isParasited = false
+	self.mapBlip.parasited = false
 end
 
 function MapBlipMixin:SetControllerClient(client)
@@ -119,7 +120,14 @@ function MapBlipMixin:SetControllerClient(client)
 end
 
 function MapBlipMixin:SetCoords(coords)
-	self.mapBlip:SetAngles(Angles(0, atan2(coords.zAxis.x, coords.zAxis.z), 0))
+	if self.__no_angle == false then
+		local tunnel = self.inTunnel
+		local angle  = atan2(coords.zAxis.x, coords.zAxis.z)
+		if tunnel then
+			angle = angle + tunnel:GetMinimapYawOffset()
+		end
+		self.mapBlip:SetAngles(Angles(0, angle, 0))
+	end
 end
 
 local SetCoords = MapBlipMixin.SetCoords

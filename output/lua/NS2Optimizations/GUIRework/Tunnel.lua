@@ -9,8 +9,7 @@ if Server then
 			b.connected = true
 			a:MarkBlipDirty()
 			b:MarkBlipDirty()
-			self:SetConnectionStartPoint(a:GetOrigin())
-			self:SetConnectionEndPoint(b:GetOrigin())
+			a.mapBlip.target = b.mapBlip:GetId()
 		end
 	end
 
@@ -19,12 +18,13 @@ if Server then
 		old(self, exit)
 		local a = Shared.GetEntity(self.exitAId)
 		local b = Shared.GetEntity(self.exitBId)
-		self:SetConnectionStartPoint()
 		if a ~= nil then
 			a.connected = false
+			a.mapBlip.target = Entity.invalidId
 			a:MarkBlipDirty()
 		elseif b ~= nil then
 			b.connected = false
+			a.mapBlip.target = Entity.invalidId
 			b:MarkBlipDirty()
 		end
 	end

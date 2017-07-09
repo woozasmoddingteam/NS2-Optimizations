@@ -10,21 +10,22 @@ local AlertNewMapBlip
 local AlertActivity
 local AlertCombat
 local AlertParasite
+local AlertConnectorTarget
 
-MapBlip.kMapName = "MapBlip"
+MapBlip.kMapName = "mapblip"
 
 local networkVars =
 {
 	m_origin = "interpolated position (by 0.2 [2 3 5], by 0.2 [2 3 5], by 0.2 [2 3 5])",
-    m_angles = "interpolated angles   (by 10000 [0],   by 0.1 [3],     by 10000 [0])",
+    m_angles = "interpolated angles   (by 10 [0],   by 0.1 [3],     by 10 [0])",
 	m_parentId = "integer (-1 to -1)",
 	m_attachPoint = "integer (-1 to -1)",
 
     type            = "enum kMinimapBlipType",
     team            = "integer (" .. kTeamInvalid .. " to " .. kSpectatorIndex .. ")",
-	isHallucination = "boolean",
+	hallucination   = "boolean",
 
-	inCombat = "boolean",
+	combatant = "boolean",
 	active   = "boolean",
 
 	ownerId = "entityid",
@@ -33,9 +34,9 @@ local networkVars =
 if Server then
 	function MapBlip:OnCreate()
 		Entity.OnCreate(self)
-		
+
 		self:SetUpdates(false)
-		
+
 		self:SetRelevancyDistance(Math.infinity)
 	end
 elseif Client then
@@ -45,7 +46,7 @@ elseif Client then
 		if AlertNewMapBlip  == nil then
 			AlertNewMapBlip  = GUIMinimapFrame.AlertNewMapBlip
 		end
-		if AlertActivity    == nil then
+		if false and AlertActivity == nil then
 			AlertActivity    = GUIMinimapFrame.AlertActivity
 		end
 		if AlertCombat      == nil then
@@ -53,12 +54,12 @@ elseif Client then
 		end
 		AlertNewMapBlip(self)
 		--AlertActivity(self)
-		AlertCombat(self)
+		--AlertCombat(self)
 
 		self:SetUpdates(false)
 		self:AddFieldWatcher("type",        AlertNewMapBlip)
 		--self:AddFieldWatcher("active",      AlertActivity)
-		self:AddFieldWatcher("inCombat",    AlertCombat)
+		self:AddFieldWatcher("combatant",    AlertCombat)
 	end
 end
 
@@ -89,11 +90,11 @@ if Server then
 	end
 
 	function MapBlip:GetIsInCombat()
-		return self.inCombat
+		return self.combatant
 	end
 
 	function MapBlip:GetIsParasited()
-		return self.isParasited
+		return self.parasited
 	end
 
 	function MapBlip:GetOwnerEntityId()
@@ -105,12 +106,12 @@ Shared.LinkClassToMap("MapBlip", MapBlip.kMapName, networkVars)
 
 class 'PlayerMapBlip' (MapBlip)
 
-PlayerMapBlip.kMapName = "PlayerMapBlip"
+PlayerMapBlip.kMapName = "playermapblip"
 
 local playerNetworkVars =
 {
     clientIndex = "entityid",
-	isParasited = "boolean",
+	parasited   = "boolean",
 }
 
 if Client then
@@ -120,9 +121,29 @@ if Client then
 		if AlertParasite == nil then
 			AlertParasite = GUIMinimapFrame.AlertParasite
 		end
+
 		AlertParasite(self)
-		self:AddFieldWatcher("isParasited", AlertParasite)
+		self:AddFieldWatcher("parasited", AlertParasite)
 	end
 end
 
 Shared.LinkClassToMap("PlayerMapBlip", PlayerMapBlip.kMapName, playerNetworkVars)
+
+ConnectorMapBlip.kMapName = "connectormapblip"
+
+if Client then
+	function ConnectorMapBlip:OnInitialized()
+		MapBlip.OnInitialized(self)
+
+		if AlertConnectorTarget == nil then
+			AlertConnectorTarget = GUIMinimapFrame.AlertParasite
+		end
+
+		AlertConnectorTarget(self)
+		self:AddFieldWatcher("target", AlertConnectorTarget)
+	end
+end
+
+Shared.LinkClassToMap("ConnectorMapBlip", ConnectorMapBlip.kMapName, {
+	target = "entityid"
+})

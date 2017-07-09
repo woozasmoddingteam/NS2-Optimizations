@@ -6,6 +6,8 @@
 -- fast.
 -- This is a good alternative to using tables as hash
 -- maps, for when you want to iterate over the elements.
+-- It also has the concept of owners. Basically each
+-- array index has to have an owner.
 --
 -- NB: Values of `false` are reserved. Don't use Set to Free.
 
@@ -22,8 +24,15 @@
 
 local min = math.min
 local array = table.array
+local WkTable = WkTable
+if array == nil then
+	local new = require "table.new"
+	function array(n) return new(n+1, 0) end
+	local meta = {__mode = "k"}
+	function WkTable(t)
+		return setmetatable(t, meta)
+	end
 
-if not class then
 	local cls = {}
 	local meta = {
 		__index = cls
@@ -33,7 +42,7 @@ if not class then
 			return setmetatable({}, meta)
 		end
 	})
-	_G.DynArray = cls
+	_G.DynArrayImplementation = cls
 else
 	class "DynArrayImplementation"
 end
@@ -45,6 +54,7 @@ local function New(_, size)
 	da.array = array(size or 0)
 	da.next  = 2^52
 	da.free  = 0
+	da.owners = WkTable {}
 	return da
 end
 
@@ -62,44 +72,54 @@ function DynArray:Iterate()
 	return iterator, self.array, 0
 end
 
-function DynArray:Append(v)
-	local free  = self.free
-	local array = self.array
-	local len   = #array
+function DynArray:Allocate(owner, v)
+	local owners = self.owners
+	local array  = self.array
+	local free   = self.free
+	local len    = #array
+	local slot
 	if free == 0 then
-		local slot = len+1
-		array[slot] = v
-		return slot
+		slot = len+1
 	else
-		local next  = self.next
-		assert(array[next] == false)
-		array[next] = v
+		local slot = self.next
+		assert(array[slot] == false)
 		self.free = free - 1
 		self.next = 2^52
 		if free > 1 then
-			for i = next+1, len do
+			for i = slot+1, len do
 				if array[i] == false then
 					self.next = i
 					break
 				end
 			end
 		end
-		return next
 	end
-end
-
-function DynArray:Free(i)
-	self.free = self.free + 1
-	self.array[i] = false
-	self.next = min(self.next, i)
-end
-
-function DynArray:Get(i)
-	return self.array[i]
+	array[slot] = v
+	owners[owner] = slot
+	return slot
 end
 
 function DynArray:Set(i, v)
 	self.array[i] = v
+end
+
+function DynArray:AddOwner(i, owner)
+	self.owners[owner] = i
+end
+
+function DynArray:Free(i)
+	self.array[i] = false
+	self.free = self.free + 1
+	self.next = min(self.next, i)
+end
+
+function DynArray:Get(owner)
+	local i = self.owners[owner]
+	return self.array[i], i
+end
+
+function DynArray:GetIndex(owner)
+	return self.owners[owner]
 end
 
 _G.DynArray = setmetatable({}, {__index = DynArray, __call = New})
