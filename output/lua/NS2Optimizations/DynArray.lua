@@ -81,7 +81,7 @@ function DynArray:Allocate(owner, v)
 	if free == 0 then
 		slot = len+1
 	else
-		local slot = self.next
+		slot = self.next
 		assert(array[slot] == false)
 		self.free = free - 1
 		self.next = 2^52
