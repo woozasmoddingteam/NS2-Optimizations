@@ -165,15 +165,17 @@ local function Update(deltaTime)
 	-- The first script is always executed
 	do
 		local script = scripts[nextScript]
-		script:Update(deltaTime)
-		local new_now = clock(deltaTime)
-		script[qRunTime] = new_now - now
+		if script ~= nil and script:GetIsVisible() then
+			script:Update(deltaTime)
+			local new_now = clock(deltaTime)
+			script[qRunTime] = new_now - now
+		end
 	end
 
 	for i = nextScript+1, numScripts do
         local script = scripts[i]
 
-		if script:GetIsVisible() then
+		if script ~= nil and script:GetIsVisible() then
 			local runtime = script[qRunTime]
 			if now + runtime > max_update_time then
 				nextScript = i
@@ -191,7 +193,7 @@ local function Update(deltaTime)
 	for i = 1, nextScript-1 do
         local script = scripts[i]
 
-		if script:GetIsVisible() then
+		if script ~= nil and script:GetIsVisible() then
 			local runtime = script[qRunTime]
 			if now + runtime > max_update_time then
 				nextScript = i
