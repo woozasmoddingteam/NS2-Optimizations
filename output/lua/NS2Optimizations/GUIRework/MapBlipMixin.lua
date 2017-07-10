@@ -22,15 +22,15 @@ function MapBlipMixin:__initmixin()
 
 	local type, team = self:GetMapBlipInfo()
 	if type then
-		Shared.Message(ToString(self))
 		local mapName =
 			self:isa "Player" and PlayerMapBlip.kMapName
 			or
-			(self:isa "Tunnel" or self:isa "PhaseGate") and ConnectorMapBlip.kMapName
+			(self:isa "TunnelEntrance" or self:isa "PhaseGate") and ConnectorMapBlip.kMapName
 			or
 			MapBlip.kMapName
 
 		local mapBlip = Server.CreateEntity(mapName)
+		Shared.Message(ToString(mapBlip) .. ":" .. kMinimapBlipType[type])
 
 		mapBlip.isHallucination = self.isHallucination == true or self:isa "Hallucination"
 		mapBlip.type, mapBlip.team = type, team

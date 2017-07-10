@@ -1,6 +1,7 @@
-local Client            = Client
-local Shared            = Shared
-local Server            = Server
+local Client = Client
+local Shared = Shared
+local Server = Server
+local kType  = kMinimapBlipType
 
 class 'MapBlip' (Entity)
 
@@ -46,20 +47,18 @@ elseif Client then
 		if AlertNewMapBlip  == nil then
 			AlertNewMapBlip  = GUIMinimapFrame.AlertNewMapBlip
 		end
-		if false and AlertActivity == nil then
+		if AlertActivity    == nil then
 			AlertActivity    = GUIMinimapFrame.AlertActivity
 		end
 		if AlertCombat      == nil then
 			AlertCombat      = GUIMinimapFrame.AlertCombat
 		end
 		AlertNewMapBlip(self)
-		--AlertActivity(self)
-		--AlertCombat(self)
 
 		self:SetUpdates(false)
-		self:AddFieldWatcher("type",        AlertNewMapBlip)
-		--self:AddFieldWatcher("active",      AlertActivity)
-		self:AddFieldWatcher("combatant",    AlertCombat)
+		self:AddFieldWatcher("type",      AlertNewMapBlip)
+		self:AddFieldWatcher("active",    AlertActivity)
+		self:AddFieldWatcher("combatant", AlertCombat)
 	end
 end
 
@@ -138,7 +137,7 @@ if Client then
 		MapBlip.OnInitialized(self)
 
 		if AlertConnectorTarget == nil then
-			AlertConnectorTarget = GUIMinimapFrame.AlertParasite
+			AlertConnectorTarget = GUIMinimapFrame.AlertConnectorTarget
 		end
 
 		AlertConnectorTarget(self)

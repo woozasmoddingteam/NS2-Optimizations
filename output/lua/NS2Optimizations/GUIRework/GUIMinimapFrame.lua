@@ -251,7 +251,10 @@ local kModeZoom_x_max = GUIMarineHUD.kMinimapBackgroundSize.x / 2 + 24
 local kModeZoom_y_max = GUIMarineHUD.kMinimapBackgroundSize.y / 2 + 24
 
 Event.Hook("Console_mapinfo", function()
-	Log("Size: %s\nCenter: %s", Client.minimapExtentScale, Client.minimapExtentOrigin)
+	Shared.Message(
+		"Size: "     .. ToString(Client.minimapExtentScale) ..
+		"\nCenter: " .. ToString(Client.minimapExtentOrigin)
+	)
 end)
 
 local kClassGrid = BuildClassToGrid()
@@ -302,29 +305,23 @@ end
 
 local minimapframes = {}
 
---[[
-function GUIMinimapFrame.AlertActivity(mapblip)
-	Log("AlertActivity(%s:%s)", mapblip, kMinimapBlipType[mapblip.type])
-	for _, self in ipairs(minimapframes) do
-		local icon = self.mapBlipIcons[mapblip]
-		if icon == nil then
-			GUIMinimapFrame.AlertNewMapBlip(mapblip)
-			icon = self.mapBlipIcons[mapblip]
-		end
-		local activity = mapblip.active
-		--local prev_activity = icon.active
-		--local prev_color = icon:GetColor()
-		--if icon.active ~= activity then
-			--icon.active = activity
-			if activity then
-				icon:SetColor(ColorForMapBlip(mapblip))
-			else
-				icon:SetColor(Color(0.5, 0.5, 0.5))
-			end
-		--end
+local function ResetColor(self, mapblip)
+	local icon = self.icons:Get(mapblip)
+	if icon ~= nil and icon.active ~= mapblip.active then
+		icon.active = mapblip.active
+		local color = ColorForMapBlip(mapblip)
+		icon.color = color
+		icon:SetColor(mapblip.active and color or ColorInactive(color))
 	end
 end
---]]
+
+function GUIMinimapFrame.AlertActivity(mapblip)
+	Log("AlertActivity(%s:%s)", mapblip, kType[mapblip.type])
+	for _, self in ipairs(minimapframes) do
+		ResetColor(self, mapblip)
+	end
+	return true
+end
 
 local function AlertConnectorTarget(self, mapblip)
 	if mapblip.team ~= Client.GetLocalPlayer():GetTeamNumber() then return end
@@ -334,33 +331,42 @@ local function AlertConnectorTarget(self, mapblip)
 
 	local connector, i = connectors:Get(mapblip)
 	if connector ~= nil and target == nil then
+		Shared.Message "Destroying connector!"
 		connectors:Free(i)
 		DestroyItem(connector)
 	elseif target ~= nil then
+		Shared.Message "Connect!"
 		if connector == nil then
+			Shared.Message "Connector does not exist"
 			connector = NewItem()
 			self.connectors:Allocate(mapblip, connector)
 
 			connector:SetTexture(kLineTexture)
 			if mapblip.team == 2 then
-				connector:SetTexturePixelCoordinates(0, 0, length, 16)
+				Shared.Message "Connector is a tunnel"
 				local color = self.nextTunnelColor
 				self.nextTunnelColor = color - kTunnelColorStep
 				if self.nextTunnelColor.x < kMinTunnelColor.x then -- You can't actually compare vectors
 					self.nextTunnelColor = kMaxTunnelColor
 				end
 
-				icons:Get(mapblip):SetColor(color)
-				icons:Get(mapblip).active = true -- We need to do this so that the color doesn't get overridden, might be unneeded
+				local icon = icons:Get(mapblip)
+				icon.color = color
+				icon:SetColor(color)
+				icon.active = true -- We need to do this so that the color doesn't get overridden, might be unneeded
 				connector:SetColor(color)
 			else
+				Shared.Message "Connector is a phase gate"
 				connector:SetColor(kTeamColors[2]) -- Marines
 			end
 		end
 
 		if mapblip.team == 2 then
-			icons:Get(target):SetColor(connector:GetColor())
-			icons:Get(target).active  = true -- We need to do this so that the color doesn't get overridden, might be unneeded
+			local color = connector:GetColor()
+			local icon = icons:Get(target)
+			icon.color = color
+			icon:SetColor(color)
+			icon.active = true -- We need to do this so that the color doesn't get overridden, might be unneeded
 		end
 
 		local startpoint = mapblip:GetOrigin()
@@ -393,30 +399,37 @@ local function AlertConnectorTarget(self, mapblip)
 		size.x = 0
 		size.z = rotation
 		connector:SetRotation(size)
+		connector:SetTexturePixelCoordinates(0, 0, length, 16)
 
 		connector.mapBlipId = mapblip:GetId()
 		self.minimap:AddChild(connector)
+	else
+		Shared.Message "Nothing to do."
 	end
 end
 
 function GUIMinimapFrame.AlertConnectorTarget(mapblip)
+	Log("AlertConnectorTarget(%s:%s)", mapblip, kType[mapblip.type])
 	for _, self in ipairs(minimapframes) do
 		AlertConnectorTarget(self, mapblip)
 	end
+	return true
 end
 
-local function ResetColor(self, mapblip)
+local function AlertCombat(self, mapblip)
 	local icon = self.icons:Get(mapblip)
 	if icon == nil then
 		return
+	elseif mapblip.combatant == false then
+		icon:SetColor(icon.color)
 	end
-	icon:SetColor(ColorForMapBlip(mapblip)) -- Reset color
-	icon.active = true
 end
 function GUIMinimapFrame.AlertCombat(mapblip)
+	Log("AlertCombat(%s:%s)", mapblip, kType[mapblip.type])
 	for _, self in ipairs(minimapframes) do
-		ResetColor(self, mapblip)
+		AlertCombat(self, mapblip)
 	end
+	return true
 end
 
 local function AlertParasite(self, mapblip)
@@ -428,9 +441,11 @@ local function AlertParasite(self, mapblip)
 end
 
 function GUIMinimapFrame.AlertParasite(mapblip)
+	Log("AlertParasite(%s:%s)", mapblip, kType[mapblip.type])
 	for _, self in ipairs(minimapframes) do
 		AlertParasite(self, mapblip)
 	end
+	return true
 end
 
 local function AlertNewMapBlip(self, mapblip)
@@ -458,27 +473,27 @@ local function AlertNewMapBlip(self, mapblip)
 		Shared.Message(ToString(mapblip) .. ".type: " .. kType[icon.type] .. " -> " .. kType[type])
 	end
 
-	local color = ColorForMapBlip(mapblip)
 	local coords = kClassGrid[kType[type]]
 	icon:SetSize(self.iconSizes[type])
 	if kEternalIcons[type] then
 		local size = self.iconSizes[type]
 		PositionIcon(self, mapblip:GetOrigin(), icon)
 	end
-	icon:SetColor(color)
 	icon:SetLayer(kIconLayers[type])
 	icon:SetTexturePixelCoordinates(GUIGetSprite(coords[1], coords[2], kIconWidth, kIconHeight))
 
-	icon.active   = true
-	icon.type     = type
-	icon.combatant = false
+	icon.type = type
+
+	ResetColor(self, mapblip)
 end
 
 -- Also used for when mapblips change type
 function GUIMinimapFrame.AlertNewMapBlip(mapblip)
+	Log("AlertNewMapBlip(%s:%s)", mapblip, kType[mapblip.type])
 	for _, self in ipairs(minimapframes) do
 		AlertNewMapBlip(self, mapblip)
 	end
+	return true
 end
 
 function GUIMinimapFrame:Initialize()
@@ -535,16 +550,20 @@ function GUIMinimapFrame:SetBackgroundMode(mode)
 		local size
 		if self.mode == kModeZoom then
 			size = GUISize(1) * kMapScale * self.zoom
-			self.scale = size / GUISize(0.75)
 		elseif self.mode == kModeMini then
 			size = GUIScale(300)
 			self.minimap:SetPosition(Vector(0, -size, 0))
-			self.scale = size / GUISize(0.75) / kMapScale
 		else
-			size = GUISize(0.75)
+			size = GUISize(
+				--(1-1/((kMapScale+0.25)^3+1))*0.75+0.25
+				math_min(1, kMapScale/1.25)
+			)
 			self.minimap:SetPosition(Vector(size, size, 0) * -0.5)
-			self.scale = kMapScale^-1
+			--self.scale = kMapScale^-1
 		end
+		Shared.Message("Minimap size: " .. size)
+
+		self.scale = size / GUISize(0.75) / kMapScale
 
 		local iconSizes = table.array(#kIconSizes)
 		for i = 1, #kIconSizes do
@@ -612,13 +631,8 @@ do
 			end
 		end
 		PositionIcon2(self, origin, icon)
-		if icon.active ~= mapblip.active then
-			icon.active = mapblip.active
-			local color = ColorForMapBlip(mapblip)
-			icon:SetColor(mapblip.active and color or ColorInactive(color))
-		end
 		if mapblip.combatant then
-			local color = icon:GetColor()
+			local color = Color(icon.color)
 			color.r = color.r * (2 - anim)
 			color.g = color.g * anim
 			color.b = color.b * anim
