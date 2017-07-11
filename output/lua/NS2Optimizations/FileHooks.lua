@@ -239,11 +239,11 @@ ModLoader.SetupFileHook("lua/TechTreeConstants.lua", "lua/NS2Optimizations/Tech/
 
 for _, v in ipairs {
 	"GUIManager",
-	"GUIMinimapFrame",
-	"MapBlip",
-	"MapBlipMixin",
-	"MapConnector",
-	"MinimapConnectionMixin",
+	--"GUIMinimapFrame",
+	--"MapBlip",
+	--"MapBlipMixin",
+	--"MapConnector",
+	--"MinimapConnectionMixin",
 } do
 	ModLoader.SetupFileHook("lua/"..v..".lua", "lua/NS2Optimizations/GUIRework/"..v..".lua", "replace")
 end
@@ -251,12 +251,12 @@ for _, v in ipairs {
 	"GUIUtility",
 	"GUIScript",
 	"GUIChat",
-	"TunnelEntrance",
-	"Tunnel",
-	"TunnelUserMixin",
-	"PhaseGate",
-	"Globals",
-	"GUIMinimapConnection",
+	--"TunnelEntrance",
+	--"Tunnel",
+	--"TunnelUserMixin",
+	--"PhaseGate",
+	--"Globals",
+	--"GUIMinimapConnection",
 } do
 	ModLoader.SetupFileHook("lua/"..v..".lua", "lua/NS2Optimizations/GUIRework/"..v..".lua", "post")
 end
