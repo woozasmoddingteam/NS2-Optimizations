@@ -69,6 +69,7 @@ kTechDataSupply                   = 67
 kTechDataSpawnBlock               = 68
 kTechDataBioMass                  = 69
 kTechDataShowOrderLine            = 70
+kTechDataOriginalCostKey          = 71
 
 local actual = LookupTechId
 function LookupTechId(x, y)

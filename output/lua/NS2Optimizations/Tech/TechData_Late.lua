@@ -1,13 +1,14 @@
 
-local kTechId = kTechId
-local kTechId_None = kTechId.None
+local kTechId          = kTechId
+local kTechId_None     = kTechId.None
 local kTechDataMapName = assert(kTechDataMapName)
 local kTechDataId      = assert(kTechDataId)
-local kTechData = {}
-_G.kTechData = kTechData
-local kMapNameTechId = {}
-local kTechCategories = {}
+local kTechData       = table.array(#kTechDataId)
+local kMapNameTechId  = {}
+local kTechCategories = table.array(#kTechDataId)
 local tech_data_src = BuildTechData()
+
+_G.kTechData = kTechData
 
 for i = 1, #kTechId do
 	kTechData[i] = false
@@ -27,9 +28,14 @@ for i = #tech_data_src, 1, -1 do
 		kTechCategories[category] = t
 		table.insert(t, id)
 	end
+	local cost = e[kTechDataCostKey]
+	if cost ~= nil then
+		e[kTechDataOriginalCostKey] = cost
+	end
 end
 
-kTechData[kTechId.Web][kTechDataCostKey] = kWebBuildCost
+kTechData[kTechId.Web][kTechDataCostKey]         = kWebBuildCost
+kTechData[kTechId.Web][kTechDataOriginalCostKey] = kWebBuildCost
 
 local function set(f, v)
 	setupvalue(f, "actual", v)
@@ -64,6 +70,24 @@ set(GetTechForCategory, function(techId)
 		return v
 	end
 end)
+
+function ZeroCosts()
+	for i = 1, #kTechId do
+		local cost = kTechData[i][kTechDataCostKey]
+		if cost ~= nil then
+			kTechData[i][kTechDataCostKey] = 0
+		end
+	end
+end
+
+function RestoreCosts()
+	for i = 1, #kTechId do
+		local cost = kTechData[i][kTechDataOriginalCostKey]
+		if cost ~= nil then
+			kTechData[i][kTechDataCostKey] = cost
+		end
+	end
+end
 
 local function disable(name)
 	_G[name] = function()
