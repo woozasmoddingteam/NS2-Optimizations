@@ -29,7 +29,11 @@ table.new = require "table.new"
 local table_new = table.new
 
 function table.array(size)
-	 return table_new(size+1, 0)
+	return table_new(size+1, 0)
+end
+
+function table.dict(size)
+	return table_new(0, size)
 end
 
 function table.dictionary(slots)
@@ -89,7 +93,7 @@ function table.find(findTable, value)
 		end
 	end
 
-	 return nil
+	return nil
 
 end
 

@@ -236,16 +236,15 @@ do -- Smart Relevancy
 end
 
 ModLoader.SetupFileHook("lua/TechTreeConstants.lua", "lua/NS2Optimizations/Tech/TechTreeConstants.lua", "post")
+ModLoader.SetupFileHook("lua/GameInfo.lua",          "lua/NS2Optimizations/Tech/GameInfo.lua",          "post")
 
 for _, v in ipairs {
 	"GUIManager",
 	--"GUIMinimapFrame",
 	--"MapBlip",
 	--"MapBlipMixin",
-	--"MinimapMappableMixin",
-	--"MinimapConnectionMixin",
 	--"MapConnector",
-	--"GUIMinimapButtons",
+	--"MinimapConnectionMixin",
 } do
 	ModLoader.SetupFileHook("lua/"..v..".lua", "lua/NS2Optimizations/GUIRework/"..v..".lua", "replace")
 end
@@ -254,11 +253,15 @@ for _, v in ipairs {
 	"GUIScript",
 	"GUIChat",
 	--"TunnelEntrance",
+	--"Tunnel",
+	--"TunnelUserMixin",
+	--"PhaseGate",
 	--"Globals",
+	--"GUIMinimapConnection",
 } do
 	ModLoader.SetupFileHook("lua/"..v..".lua", "lua/NS2Optimizations/GUIRework/"..v..".lua", "post")
 end
---ModLoader.SetupFileHook("lua/NS2Plus/GUIScripts/GUIMinimap.lua", true, "halt")
+ModLoader.SetupFileHook("lua/NS2Plus/GUIScripts/GUIMinimap.lua", true, "halt")
 ModLoader.SetupFileHook("lua/shine/extensions/chatbox/client.lua", "lua/NS2Optimizations/GUIRework/shine_chatbox.lua", "replace")
 
 ModLoader.SetupFileHook("lua/Mixins/ControllerMixin.lua", "lua/NS2Optimizations/NYIRemoval/ControllerMixin.lua", "post")

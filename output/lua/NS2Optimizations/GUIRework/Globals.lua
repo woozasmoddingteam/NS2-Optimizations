@@ -1,9 +1,15 @@
 
 ---[[
 kMinimapBlipType = enum {
+	-- Dynamic
+	-- Layer 0
 	"Undefined",
 	"TechPoint",
 	"ResourcePoint",
+	"PowerPoint",
+	"UnsocketedPowerPoint",
+	-- Layer 1
+	-- Static
 	"Sentry",
 	"CommandStation",
 	"Extractor",
@@ -17,18 +23,27 @@ kMinimapBlipType = enum {
 	"PrototypeLab",
 	"Hive",
 	"Harvester",
-	"Hydra",
+	"Door",
+	-- Layer 2
+	"SentryBattery",
+	"Infestation",
 	"Egg",
-	"Embryo",
-	"Crag",
-	"Whip",
-	"Shade",
-	"Shift",
 	"Shell",
 	"Veil",
 	"Spur",
 	"TunnelEntrance",
+	"Hydra",
 	"BoneWall",
+	-- Dynamic
+	"Crag",
+	"Whip",
+	"Shade",
+	"Shift",
+	"ARC",
+	"Drifter",
+	"MAC",
+	"Embryo",
+	-- Layer 3
 	"Marine",
 	"JetpackMarine",
 	"Exo",
@@ -37,14 +52,7 @@ kMinimapBlipType = enum {
 	"Onos",
 	"Fade",
 	"Gorge",
-	"Door",
-	"PowerPoint",
-	"UnsocketedPowerPoint",
-	"ARC",
-	"Drifter",
-	"MAC",
-	"Infestation",
-	"SentryBattery"
+	"Scan",
 }
 --]]
 --[[

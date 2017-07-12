@@ -1,13 +1,14 @@
 
-local kTechId = kTechId
-local kTechId_None = kTechId.None
+local kTechId          = kTechId
+local kTechId_None     = kTechId.None
 local kTechDataMapName = assert(kTechDataMapName)
 local kTechDataId      = assert(kTechDataId)
-local kTechData = {}
-_G.kTechData = kTechData
-local kMapNameTechId = {}
-local kTechCategories = {}
+local kTechData       = table.array(#kTechId)
+local kMapNameTechId  = {}
+local kTechCategories = table.array(#kTechId)
 local tech_data_src = BuildTechData()
+
+_G.kTechData = kTechData
 
 for i = 1, #kTechId do
 	kTechData[i] = false
@@ -27,14 +28,17 @@ for i = #tech_data_src, 1, -1 do
 		kTechCategories[category] = t
 		table.insert(t, id)
 	end
+	local cost = e[kTechDataCostKey]
+	if cost ~= nil then
+		e[kTechDataOriginalCostKey] = cost
+	end
 end
 
+kTechData[kTechId.Web][kTechDataCostKey]         = kWebBuildCost
+kTechData[kTechId.Web][kTechDataOriginalCostKey] = kWebBuildCost
+
 local function set(f, v)
-	local i = 1
-	while assert(debug.getupvalue(f, i), "No such value!") ~= "actual" do
-		i = i + 1
-	end
-	debug.setupvalue(f, i, v)
+	setupvalue(f, "actual", v)
 end
 
 set(LookupTechId_NS2Opti, function(data, field)
@@ -66,6 +70,30 @@ set(GetTechForCategory, function(techId)
 		return v
 	end
 end)
+
+function ZeroCosts()
+	Shared.Message "Zeroing costs!"
+	for i = 1, #kTechId do
+		local cost = kTechData[i] and kTechData[i][kTechDataOriginalCostKey]
+		if cost then
+			kTechData[i][kTechDataCostKey] = 0
+		end
+	end
+end
+
+function RestoreCosts()
+	Shared.Message "Restorings costs!"
+	for i = 1, #kTechId do
+		local cost = kTechData[i] and kTechData[i][kTechDataOriginalCostKey]
+		if cost then
+			kTechData[i][kTechDataCostKey] = cost
+		end
+	end
+end
+
+if TechData_Initial_InWarmUp then
+	ZeroCosts()
+end
 
 local function disable(name)
 	_G[name] = function()

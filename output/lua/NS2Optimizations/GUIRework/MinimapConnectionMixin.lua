@@ -1,0 +1,3 @@
+MinimapConnectionMixin = {
+	type = "MinimapConnection"
+}
