@@ -3,9 +3,9 @@ local kTechId          = kTechId
 local kTechId_None     = kTechId.None
 local kTechDataMapName = assert(kTechDataMapName)
 local kTechDataId      = assert(kTechDataId)
-local kTechData       = table.array(#kTechDataId)
+local kTechData       = table.array(#kTechId)
 local kMapNameTechId  = {}
-local kTechCategories = table.array(#kTechDataId)
+local kTechCategories = table.array(#kTechId)
 local tech_data_src = BuildTechData()
 
 _G.kTechData = kTechData
@@ -72,21 +72,27 @@ set(GetTechForCategory, function(techId)
 end)
 
 function ZeroCosts()
+	Shared.Message "Zeroing costs!"
 	for i = 1, #kTechId do
-		local cost = kTechData[i][kTechDataCostKey]
-		if cost ~= nil then
+		local cost = kTechData[i] and kTechData[i][kTechDataOriginalCostKey]
+		if cost then
 			kTechData[i][kTechDataCostKey] = 0
 		end
 	end
 end
 
 function RestoreCosts()
+	Shared.Message "Restorings costs!"
 	for i = 1, #kTechId do
-		local cost = kTechData[i][kTechDataOriginalCostKey]
-		if cost ~= nil then
+		local cost = kTechData[i] and kTechData[i][kTechDataOriginalCostKey]
+		if cost then
 			kTechData[i][kTechDataCostKey] = cost
 		end
 	end
+end
+
+if TechData_Initial_InWarmUp then
+	ZeroCosts()
 end
 
 local function disable(name)
