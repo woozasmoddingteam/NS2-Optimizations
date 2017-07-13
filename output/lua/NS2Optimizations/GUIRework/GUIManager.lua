@@ -257,5 +257,5 @@ end)
 
 if Event then
     Event.Hook("UpdateClient", Update, "GUIManager")
-    Event.Hook("ResolutionChanged", GUIManager.OnResolutionChanged)
+    Event.Hook("ResolutionChanged", function(...) GUIManager.OnResolutionChanged(nil, ...) end)
 end
