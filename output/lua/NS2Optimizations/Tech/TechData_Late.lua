@@ -71,6 +71,30 @@ set(GetTechForCategory, function(techId)
 	end
 end)
 
+function ZeroCosts()
+	Shared.Message "Zeroing costs!"
+	for i = 1, #kTechId do
+		local cost = kTechData[i] and kTechData[i][kTechDataOriginalCostKey]
+		if cost then
+			kTechData[i][kTechDataCostKey] = 0
+		end
+	end
+end
+
+function RestoreCosts()
+	Shared.Message "Restorings costs!"
+	for i = 1, #kTechId do
+		local cost = kTechData[i] and kTechData[i][kTechDataOriginalCostKey]
+		if cost then
+			kTechData[i][kTechDataCostKey] = cost
+		end
+	end
+end
+
+if TechData_Initial_InWarmUp then
+	ZeroCosts()
+end
+
 local function disable(name)
 	_G[name] = function()
 		error(("'%s' has been disabled!"):format(name))

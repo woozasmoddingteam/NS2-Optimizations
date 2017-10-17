@@ -236,7 +236,7 @@ do -- Smart Relevancy
 end
 
 ModLoader.SetupFileHook("lua/TechTreeConstants.lua", "lua/NS2Optimizations/Tech/TechTreeConstants.lua", "post")
---ModLoader.SetupFileHook("lua/GameInfo.lua",          "lua/NS2Optimizations/Tech/GameInfo.lua",          "post")
+ModLoader.SetupFileHook("lua/GameInfo.lua",          "lua/NS2Optimizations/Tech/GameInfo.lua",          "post")
 
 for _, v in ipairs {
 	"GUIManager",
