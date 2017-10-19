@@ -215,18 +215,18 @@ end
 
 -- Returns the numeric median of the given array of numbers
 function table.median( t )
-	 local temp = {}
+	local temp = {}
 
-	 --deep copy all numbers
-	 for i = 1, #t do
-		  temp[i] = t[i]
-	 end
+	--deep copy all numbers
+	for i = 1, #t do
+		temp[i] = t[i]
+	end
 
-	 if #temp == 0 then
-		  return -1
-	 end
+	if #temp == 0 then
+		return -1
+	end
 
-	 table_sort(temp)
+	table_sort(temp)
 
 	start = start or 1
 	stop = stop or #t
