@@ -262,7 +262,7 @@ for _, v in ipairs {
 	ModLoader.SetupFileHook("lua/"..v..".lua", "lua/NS2Optimizations/GUIRework/"..v..".lua", "post")
 end
 --ModLoader.SetupFileHook("lua/NS2Plus/GUIScripts/GUIMinimap.lua", true, "halt")
-ModLoader.SetupFileHook("lua/shine/extensions/chatbox/client.lua", "lua/NS2Optimizations/GUIRework/shine_chatbox.lua",    "replace")
+--ModLoader.SetupFileHook("lua/shine/extensions/chatbox/client.lua", "lua/NS2Optimizations/GUIRework/shine_chatbox.lua",    "replace")
 ModLoader.SetupFileHook("lua/NS2Plus/Client/CHUDGUI_EndStats.lua", "lua/NS2Optimizations/GUIRework/CHUDGUI_EndStats.lua", "replace")
 
 ModLoader.SetupFileHook("lua/Mixins/ControllerMixin.lua", "lua/NS2Optimizations/NYIRemoval/ControllerMixin.lua", "post")

@@ -66,6 +66,8 @@ local scripts                = {}
 local path_to_script         = {}
 local single_script_inst     = {}
 
+GUIManager.scripts = scripts -- For shine compatility
+
 do
 	local files = {}
 	Shared.GetMatchingFileNames("lua/*", true, files)
@@ -97,7 +99,7 @@ local function CreateGUIScript(path)
 	script.updateInterval = script.updateInterval or kUpdateInterval
 	script.lastUpdateTime = 0
 
-	script._name = path
+	script._scriptName = path
 
 	script[qRunTime] = 0
 
@@ -251,7 +253,7 @@ GUIManager.CreateLinesItem = GUIManager.CreateTextItem
 
 Event.Hook("Console_script_times", function()
 	for i, script in ipairs(scripts) do
-		Log("%s: %s", script._name, script[qRunTime])
+		Log("%s: %s", script._scriptName, script[qRunTime])
 	end
 end)
 
