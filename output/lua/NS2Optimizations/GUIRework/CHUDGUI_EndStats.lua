@@ -2,6 +2,7 @@
 -- This file was originally from the NS2+ mod which is owned by Unknown Worlds Entertainment
 
 class 'CHUDGUI_EndStats' (GUIScript)
+local self
 
 CHUDEndStatsVisible = false
 
@@ -2195,7 +2196,8 @@ local function InitEndStats(self)
 	techLogTable         = {}
 end
 
-function CHUDGUI_EndStats:Initialize()
+function CHUDGUI_EndStats.Initialize(_self)
+	self = _self
 	self.initialized = false
 
 	if not loadedLastRound and GetFileExists(lastRoundFile) then
@@ -2226,139 +2228,114 @@ end
 
 function CHUDGUI_EndStats:Update(deltaTime)
 
-	local timeSinceRoundEnd = lastStatsMsg > 0 and Shared.GetTime() - lastGameEnd or 0
 	local gameInfo = GetGameInfoEntity()
 
-	if self:GetIsVisible() then
-		local mouseX, mouseY = Client.GetCursorPosScreen()
+	local mouseX, mouseY = Client.GetCursorPosScreen()
 
-		-- When going back to the RR sometimes we'll lose the cursor
-		if not MouseTracker_GetIsVisible() then
-			MouseTracker_SetIsVisible(true)
-		end
-
-		-- Shine:IsExtensionEnabled was only returning plugin state, but not the plugin
-		local pgpEnabled = Shine and Shine.Plugins and Shine.Plugins["pregameplus"] and Shine.Plugins["pregameplus"].dt and Shine.Plugins["pregameplus"].dt.Enabled
-
-		local warmupActive = gameInfo.GetWarmUpActive and gameInfo:GetWarmUpActive()
-
-		-- Hide the stats when the game starts if we're on a team
-		if PlayerUI_GetHasGameStarted() and not warmupActive and not pgpEnabled and (Client.GetLocalPlayer():GetTeamNumber() ~= kTeamReadyRoom and Client.GetLocalPlayer():GetTeamNumber() ~= kSpectatorIndex) then
-			self:SetIsVisible(false)
-			self.actionIconGUI:Hide()
-		end
-
-		-- Handle row highlighting
-		if not self.hoverMenu.background:GetIsVisible() then
-			self.lastRow = nil
-			highlightedField = nil
-			for index, row in ipairs(self.team1UI.playerRows) do
-				if index == 1 then
-					local highlightColor = kMarineHeaderRowTextHighlightColor
-					local textColor = kMarineHeaderRowTextColor
-					for fieldName, item in pairs(row) do
-						if item.GetText and item:GetText() ~= "" then
-							if GUIItemContainsPoint(item, mouseX, mouseY) then
-								highlightedField = fieldName
-								highlightedFieldMarine = true
-								item:SetColor(highlightColor)
-							else
-								item:SetColor(textColor)
-							end
-						end
-					end
-				else
-					CheckRowHighlight(self, row, mouseX, mouseY)
-				end
-			end
-			for index, row in ipairs(self.team2UI.playerRows) do
-				if index == 1 then
-					local highlightColor = kAlienHeaderRowTextHighlightColor
-					local textColor = kAlienHeaderRowTextColor
-					for fieldName, item in pairs(row) do
-						if item.GetText and item:GetText() ~= "" then
-							if GUIItemContainsPoint(item, mouseX, mouseY) then
-								highlightedField = fieldName
-								highlightedFieldMarine = false
-								item:SetColor(highlightColor)
-							else
-								item:SetColor(textColor)
-							end
-						end
-					end
-				else
-					CheckRowHighlight(self, row, mouseX, mouseY)
-				end
-			end
-
-			if self.lastRow == nil then
-				self.tooltip:Hide()
-			end
-
-			-- Change it to the field name on the message table for proper sorting
-			if highlightedField == "acc" then
-				highlightedField = "realAccuracy"
-			elseif highlightedField == "timeBuilding" then
-				highlightedField = "minutesBuilding"
-			elseif highlightedField == "timePlayed" then
-				highlightedField = "minutesPlaying"
-			elseif highlightedField == "playerName" then
-				highlightedField = "lowerCaseName"
-			end
-		end
-
-		-- Handle sliderbar position and display
-		if self.sliderBarBg:GetIsVisible() and self.mousePressed and self.isDragging then
-			HandleSlidebarClicked(self)
-		end
-
-		-- Check if it's visible again since we hide the menu if the game starts
-		local showSlidebar = self.contentSize > kContentMaxYSize and self:GetIsVisible()
-		local sliderPos = (self.slideOffset / (self.contentSize - kContentMaxYSize) * kContentMaxYSize) - self.slider:GetSize().y/2
-		self.background:SetPosition(Vector(-(kTitleSize.x-GUILinearScale(32))/2, -self.slideOffset + GUILinearScale(128), 0))
-
-		if math.abs(self.slider:GetPosition().y - sliderPos) > 2.5 then
-			StartSoundEffect(kSlideSound)
-		end
-
-		self.slider:SetPosition(Vector(-GUILinearScale(8), sliderPos, 0))
-		self.sliderBarBg:SetIsVisible(showSlidebar)
-
-		-- Close button
-		local kCloseButtonColor = Color(1, 0, 0, 0.5)
-		local kCloseButtonHighlightColor = Color(1, 0, 0, 0.75)
-
-		if GUIItemContainsPoint(self.closeButton, mouseX, mouseY) then
-			if self.closeButton:GetColor() ~= kCloseButtonHighlightColor then
-				self.closeButton:SetColor(kCloseButtonHighlightColor)
-				StartSoundEffect(kMouseHoverSound)
-			end
-		elseif self.closeButton:GetColor() ~= kCloseButtonColor then
-			self.closeButton:SetColor(kCloseButtonColor)
-			StartSoundEffect(kMouseHoverSound)
-		end
-	else
-		self.lastRow = nil
+	-- When going back to the RR sometimes we'll lose the cursor
+	if not MouseTracker_GetIsVisible() then
+		MouseTracker_SetIsVisible(true)
 	end
 
-	-- Automatic data display on round end
-	if displayed == false and timeSinceRoundEnd > 2.5 and Shared.GetTime() > lastStatsMsg + kMaxAppendTime then
-		InitEndStats(self)
+	-- Shine:IsExtensionEnabled was only returning plugin state, but not the plugin
+	local pgpEnabled = Shine and Shine.Plugins and Shine.Plugins["pregameplus"] and Shine.Plugins["pregameplus"].dt and Shine.Plugins["pregameplus"].dt.Enabled
 
-		if CHUDGetOption("deathstats") > 0 and timeSinceRoundEnd < 7.5 then
-			self.actionIconGUI:ShowIcon(BindingsUI_GetInputValue("RequestMenu"), nil, "Last round stats", nil)
-		else
-			self.actionIconGUI:Hide()
+	local warmupActive = gameInfo.GetWarmUpActive and gameInfo:GetWarmUpActive()
+
+	-- Hide the stats when the game starts if we're on a team
+	if PlayerUI_GetHasGameStarted() and not warmupActive and not pgpEnabled and (Client.GetLocalPlayer():GetTeamNumber() ~= kTeamReadyRoom and Client.GetLocalPlayer():GetTeamNumber() ~= kSpectatorIndex) then
+		self:SetIsVisible(false)
+		self.actionIconGUI:Hide()
+	end
+
+	-- Handle row highlighting
+	if not self.hoverMenu.background:GetIsVisible() then
+		self.lastRow = nil
+		highlightedField = nil
+		for index, row in ipairs(self.team1UI.playerRows) do
+			if index == 1 then
+				local highlightColor = kMarineHeaderRowTextHighlightColor
+				local textColor = kMarineHeaderRowTextColor
+				for fieldName, item in pairs(row) do
+					if item.GetText and item:GetText() ~= "" then
+						if GUIItemContainsPoint(item, mouseX, mouseY) then
+							highlightedField = fieldName
+							highlightedFieldMarine = true
+							item:SetColor(highlightColor)
+						else
+							item:SetColor(textColor)
+						end
+					end
+				end
+			else
+				CheckRowHighlight(self, row, mouseX, mouseY)
+			end
+		end
+		for index, row in ipairs(self.team2UI.playerRows) do
+			if index == 1 then
+				local highlightColor = kAlienHeaderRowTextHighlightColor
+				local textColor = kAlienHeaderRowTextColor
+				for fieldName, item in pairs(row) do
+					if item.GetText and item:GetText() ~= "" then
+						if GUIItemContainsPoint(item, mouseX, mouseY) then
+							highlightedField = fieldName
+							highlightedFieldMarine = false
+							item:SetColor(highlightColor)
+						else
+							item:SetColor(textColor)
+						end
+					end
+				end
+			else
+				CheckRowHighlight(self, row, mouseX, mouseY)
+			end
 		end
 
-		local gameEndSummary = Client.shouldShowEndSummary or ClientUI.GetScript("GUIGameEndPage")  and ClientUI.GetScript("GUIGameEndPage"):GetIsVisible()
-		local gameFeedback   = Client.shouldShowFeedback   or ClientUI.GetScript("GUIGameFeedback") and ClientUI.GetScript("GUIGameFeedback"):GetIsVisible()
-
-		if not gameEndSummary and not gameFeedback and timeSinceRoundEnd > 7.5 and lastGameEnd > 0 then
-			self:SetIsVisible(gameInfo and gameInfo.showEndStatsAuto and CHUDGetOption("deathstats") > 1)
+		if self.lastRow == nil then
+			self.tooltip:Hide()
 		end
 
-		displayed = true
+		-- Change it to the field name on the message table for proper sorting
+		if highlightedField == "acc" then
+			highlightedField = "realAccuracy"
+		elseif highlightedField == "timeBuilding" then
+			highlightedField = "minutesBuilding"
+		elseif highlightedField == "timePlayed" then
+			highlightedField = "minutesPlaying"
+		elseif highlightedField == "playerName" then
+			highlightedField = "lowerCaseName"
+		end
+	end
+
+	-- Handle sliderbar position and display
+	if self.sliderBarBg:GetIsVisible() and self.mousePressed and self.isDragging then
+		HandleSlidebarClicked(self)
+	end
+
+	-- Check if it's visible again since we hide the menu if the game starts
+	local showSlidebar = self.contentSize > kContentMaxYSize and self:GetIsVisible()
+	local sliderPos = (self.slideOffset / (self.contentSize - kContentMaxYSize) * kContentMaxYSize) - self.slider:GetSize().y/2
+	self.background:SetPosition(Vector(-(kTitleSize.x-GUILinearScale(32))/2, -self.slideOffset + GUILinearScale(128), 0))
+
+	if math.abs(self.slider:GetPosition().y - sliderPos) > 2.5 then
+		StartSoundEffect(kSlideSound)
+	end
+
+	self.slider:SetPosition(Vector(-GUILinearScale(8), sliderPos, 0))
+	self.sliderBarBg:SetIsVisible(showSlidebar)
+
+	-- Close button
+	local kCloseButtonColor = Color(1, 0, 0, 0.5)
+	local kCloseButtonHighlightColor = Color(1, 0, 0, 0.75)
+
+	if GUIItemContainsPoint(self.closeButton, mouseX, mouseY) then
+		if self.closeButton:GetColor() ~= kCloseButtonHighlightColor then
+			self.closeButton:SetColor(kCloseButtonHighlightColor)
+			StartSoundEffect(kMouseHoverSound)
+		end
+	elseif self.closeButton:GetColor() ~= kCloseButtonColor then
+		self.closeButton:SetColor(kCloseButtonColor)
+		StartSoundEffect(kMouseHoverSound)
 	end
 end
 
@@ -2900,6 +2877,37 @@ Client.HookNetworkMessage("CHUDRTGraph", CHUDSetRTGraph)
 Client.HookNetworkMessage("CHUDKillGraph", CHUDSetKillGraph)
 Client.HookNetworkMessage("CHUDTechLog", CHUDSetTechLog)
 Client.HookNetworkMessage("CHUDBuildingSummary", CHUDSetBuildingSummary)
+
+Event.Hook("UpdateClient", function()
+	if self == nil then return end
+
+	local timeSinceRoundEnd = lastStatsMsg > 0 and Shared.GetTime() - lastGameEnd or 0
+
+	if displayed == false and timeSinceRoundEnd > 2.5 and Shared.GetTime() > lastStatsMsg + kMaxAppendTime then
+		local gameInfo = GetGameInfoEntity()
+
+		InitEndStats(self)
+
+		if CHUDGetOption("deathstats") > 0 and timeSinceRoundEnd < 7.5 then
+			self.actionIconGUI:ShowIcon(BindingsUI_GetInputValue("RequestMenu"), nil, "Last round stats", nil)
+		else
+			self.actionIconGUI:Hide()
+		end
+
+		local gameEndSummary = Client.shouldShowEndSummary or ClientUI.GetScript("GUIGameEndPage")  and ClientUI.GetScript("GUIGameEndPage"):GetIsVisible()
+		local gameFeedback   = Client.shouldShowFeedback   or ClientUI.GetScript("GUIGameFeedback") and ClientUI.GetScript("GUIGameFeedback"):GetIsVisible()
+
+		if not gameEndSummary and not gameFeedback and timeSinceRoundEnd > 7.5 and lastGameEnd > 0 then
+			self:SetIsVisible(gameInfo and gameInfo.showEndStatsAuto and CHUDGetOption("deathstats") > 1)
+		end
+
+		displayed = true
+	end
+
+	if CHUDEndStatsVisible == false then
+		self.lastRow = nil
+	end
+end)
 
 Script.AddShutdownFunction(function()
 	if lastGameEnd == 0 then return end
