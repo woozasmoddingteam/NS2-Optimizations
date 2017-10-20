@@ -251,6 +251,7 @@ end
 for _, v in ipairs {
 	--"GUIUtility",
 	"GUIScript",
+	"GUIChat",
 	--"TunnelEntrance",
 	--"Tunnel",
 	--"TunnelUserMixin",

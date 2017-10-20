@@ -154,61 +154,61 @@ function GUIManager.NotifyGUIItemDestroyed() end
 
 local function Update(deltaTime)
     PROFILE("GUIManager:Update")
-    
-	local numScripts      = #scripts
 
-	if numScripts == 0 then
-		return
-	end
+    local numScripts      = #scripts
 
-	local now             = clock()
-	local max_update_time = now + kMaxUpdateTime
-
-	-- The first script is always executed
-	do
-		local script = scripts[nextScript]
-		if script ~= nil and script:GetIsVisible() then
-			script:Update(deltaTime)
-			local new_now = clock(deltaTime)
-			script[qRunTime] = new_now - now
-		end
-	end
-
-	for i = nextScript+1, numScripts do
-        local script = scripts[i]
-
-		if script ~= nil and script:GetIsVisible() then
-			local runtime = script[qRunTime]
-			if now + runtime > max_update_time then
-				nextScript = i
-				return
-			end
-			script:Update(deltaTime)
-			local new_now = clock()
-
-			-- a bit inaccurate if lots of invisible scripts were updated in between
-			script[qRunTime] = new_now - now
-			now = new_now
-		end
+    if numScripts == 0 then
+	return
     end
 
-	for i = 1, nextScript-1 do
-        local script = scripts[i]
+    local now             = clock()
+    local max_update_time = now + kMaxUpdateTime
 
-		if script ~= nil and script:GetIsVisible() then
-			local runtime = script[qRunTime]
-			if now + runtime > max_update_time then
-				nextScript = i
-				return
-			end
-			script:Update(deltaTime)
-			local new_now = clock()
+    -- The first script is always executed
+    do
+	local script = scripts[nextScript]
+	if script ~= nil and script:GetShouldUpdate() then
+	    script:Update(deltaTime)
+	    local new_now = clock(deltaTime)
+	    script[qRunTime] = new_now - now
+	end
+    end
+
+    for i = nextScript+1, numScripts do
+	local script = scripts[i]
+
+	if script ~= nil and script:GetShouldUpdate() then
+	    local runtime = script[qRunTime]
+	    if now + runtime > max_update_time then
+		nextScript = i
+		return
+	    end
+	    script:Update(deltaTime)
+	    local new_now = clock()
 
 			-- a bit inaccurate if lots of invisible scripts were updated in between
-			script[qRunTime] = new_now - now
-			now = new_now
-		end
+	    script[qRunTime] = new_now - now
+	    now = new_now
 	end
+    end
+
+    for i = 1, nextScript-1 do
+	local script = scripts[i]
+
+	if script ~= nil and script:GetShouldUpdate() then
+	    local runtime = script[qRunTime]
+	    if now + runtime > max_update_time then
+		nextScript = i
+		return
+	    end
+	    script:Update(deltaTime)
+	    local new_now = clock()
+
+	    -- a bit inaccurate if lots of invisible scripts were updated in between
+	    script[qRunTime] = new_now - now
+	    now = new_now
+	end
+    end
 end
 
 if not Shared.GetIsRunningPrediction() then
