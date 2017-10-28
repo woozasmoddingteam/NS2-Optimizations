@@ -31,7 +31,6 @@ local default_config = Server and {
 		}
 	},
 	InfinitePlayerRelevancy   = false,
-	UnsafeTableOptimizations  = true,
 	FastMixin = true,
 	__Version = kVersion
 } or {
@@ -40,7 +39,6 @@ local default_config = Server and {
 		Box     = 4,
 		Capsule = 16
 	},
-	UnsafeTableOptimizations  = true,
 	FastMixin = true,
 	SaneMinimap = true,
 	__Version = kVersion
@@ -108,8 +106,6 @@ Shared.RegisterNetworkMessage("trace_cache_options", {
 	capsule_abs = "float",
 	capsule_rel = "float"
 })
-
-Script.Load "lua/NS2Optimizations/Table.lua"
 
 Script.Load "lua/NS2Optimizations/Closures/Utility.lua"
 ModLoader.SetupFileHook("lua/Entity.lua", "lua/NS2Optimizations/Closures/Entity.lua", "post")
