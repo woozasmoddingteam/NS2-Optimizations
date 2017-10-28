@@ -360,7 +360,7 @@ function table.removeConditional(t, filter)
 		local i = 1
 		while i <= len do
 
-				local e
+			local e
 
 			::loop:: do
 				e = t[i]
@@ -372,7 +372,7 @@ function table.removeConditional(t, filter)
 				end
 			end
 
-				i = i + 1
+			i = i + 1
 
 		  end
 
