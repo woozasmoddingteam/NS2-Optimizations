@@ -1,0 +1,6 @@
+[beta]
+name            = "NS2 Optimizations - Beta"
+description     = "README.md"
+autodescription = true
+tags            = ["Must be run on Server"]
+preview         = "preview.jpg"
