@@ -1,6 +1,13 @@
-[beta]
-name            = "NS2 Optimizations - Beta"
+[master]
+name            = "NS2 Optimizations"
 description     = "README.md"
 autodescription = true
+tags            = ["Must be run on Server"]
+preview         = "preview.jpg"
+
+[beta]
+name            = "NS2 Optimizations - Beta"
+description     = "description.beta.txt"
+autodescription = false
 tags            = ["Must be run on Server"]
 preview         = "preview.jpg"
