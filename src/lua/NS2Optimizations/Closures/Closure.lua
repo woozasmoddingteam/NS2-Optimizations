@@ -1,4 +1,10 @@
-local print = Shared and Shared.Message or print
+local print
+do
+	local printer = Shared and Shared.Message or _G.print
+	print = function(s)
+		printer("[Info] " .. s)
+	end
+end
 local select       = select
 local setmetatable = setmetatable
 local byte = string.byte
