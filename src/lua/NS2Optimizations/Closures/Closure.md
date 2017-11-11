@@ -18,7 +18,7 @@ for i = 1, 2^24 do
 end
 ```
 
-The preceding piece of code takes about 1.3 seconds on my machine (AMD Athlon x4 760K 3.8 GHz [*](1 "I overclock only when I need it, e.g. when playing NS2.")
+The preceding piece of code takes about 1.3 seconds on my machine (AMD Athlon x4 760K 3.8 GHz [\*](1 "I overclock only when I need it, e.g. when playing NS2.")
 
 However, there **are** alternatives! One of them, is this library, which was developed by me.
 
