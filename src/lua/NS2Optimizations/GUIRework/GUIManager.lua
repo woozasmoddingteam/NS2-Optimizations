@@ -93,6 +93,11 @@ local function CreateGUIScript(path)
 		class = _G[script_name]
 	end
 
+	if not class then -- gui script failed to load
+		_G[script_name] = false -- avoid trying to load script another time
+		return
+	end
+
 	local script = class()
 	script:Initialize()
 
