@@ -4,6 +4,7 @@ description     = "README.md"
 autodescription = true
 tags            = ["Must be run on Server"]
 preview         = "preview.jpg"
+website         = "https://github.com/woozasmoddingteam/NS2-Optimizations/"
 
 [beta]
 name            = "NS2 Optimizations - Beta"
