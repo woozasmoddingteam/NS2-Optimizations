@@ -145,9 +145,6 @@ function InitMixinForClass(cls, mixin, self)
 end
 
 function InitMixinForInstance(self, mixin)
-	if kUnsafe then
-		log("WARNING: InitMixinForInstance(%s (%s), %sMixin)", self, self.classname or self.GetClassName and self:GetClassName() or "[unknown class]", mixin.type)
-	end
 	if not self.__mixintypes then
 		if kUnsafe then
 			self.__constructing = false
