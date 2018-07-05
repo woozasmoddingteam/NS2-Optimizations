@@ -1,5 +1,4 @@
 modEntry = {
    FileHooks = "lua/NS2Optimizations/FileHooks.lua",
-   Client    = "lua/NS2Optimizations/Client.lua",
    Priority = 0
 }
