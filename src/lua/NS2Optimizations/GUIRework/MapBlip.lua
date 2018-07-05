@@ -18,12 +18,12 @@ MapBlip.kMapName = "mapblip"
 local networkVars =
 {
 	m_origin = "interpolated position (by 0.2 [2 3 5], by 0.2 [2 3 5], by 0.2 [2 3 5])",
-    m_angles = "interpolated angles   (by 10 [0],   by 0.1 [3],     by 10 [0])",
+	m_angles = "interpolated angles   (by 10 [0],   by 0.1 [3],     by 10 [0])",
 	m_parentId = "integer (-1 to -1)",
 	m_attachPoint = "integer (-1 to -1)",
 
-    type            = "enum kMinimapBlipType",
-    team            = "integer (" .. kTeamInvalid .. " to " .. kSpectatorIndex .. ")",
+	type            = "enum kMinimapBlipType",
+	team            = "integer (" .. kTeamInvalid .. " to " .. kSpectatorIndex .. ")",
 	hallucination   = "boolean",
 
 	combatant = "boolean",
@@ -109,7 +109,7 @@ PlayerMapBlip.kMapName = "playermapblip"
 
 local playerNetworkVars =
 {
-    clientIndex = "entityid",
+	clientIndex = "entityid",
 	parasited   = "boolean",
 }
 

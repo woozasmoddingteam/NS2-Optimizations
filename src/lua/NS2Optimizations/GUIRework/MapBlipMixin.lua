@@ -14,11 +14,11 @@ local MapBlipMixin = MapBlipMixin
 
 MapBlipMixin.optionalCallbacks =
 {
-    OnGetMapBlipInfo = "Override for getting the Map Blip Info",
+	OnGetMapBlipInfo = "Override for getting the Map Blip Info",
 }
 
 function MapBlipMixin:__initmixin()
-    assert(Server)
+	assert(Server)
 
 	local type, team = self:GetMapBlipInfo()
 	if type then
@@ -149,10 +149,10 @@ function MapBlipMixin:SetOrigin()
 end
 
 function MapBlipMixin:GetMapBlipInfo()
-    if self.OnGetMapBlipInfo then
-        local _, type, team = self:OnGetMapBlipInfo()
+	if self.OnGetMapBlipInfo then
+		local _, type, team = self:OnGetMapBlipInfo()
 		return type, team
-    end
+	end
 
 	local classname = self:GetClassName()
 	local blipType

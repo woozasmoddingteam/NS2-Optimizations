@@ -44,7 +44,7 @@ end
 set(LookupTechId_NS2Opti, function(data, field)
 	if field == kTechDataMapName then
 		local v = kMapNameTechId[data]
-		if v == nil then return kTechId_None 
+		if v == nil then return kTechId_None
 		else             return v
 		end
 	end

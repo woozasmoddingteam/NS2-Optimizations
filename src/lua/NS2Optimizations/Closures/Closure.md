@@ -70,7 +70,7 @@ f(..., a)       -- Only the first value in ... is passed to f
 ... * 2         -- Only the first value in ... is used
 ... and 2 or 4  -- Only the first value is checked for truth
 a and ... or 4  -- Only the first value is checked for truth. This one may seem weird to people, but the truth is that the ternary operation simply does not exist in Lua.
-                -- This is **not** a ternary operation. It does not act like one, it only looks like. `true and false or true` will **not** evaluate to `false`, but instead to `true`! If **any** value in the `and` part is considered false or nil, the value of the `or` part will be used.
+				-- This is **not** a ternary operation. It does not act like one, it only looks like. `true and false or true` will **not** evaluate to `false`, but instead to `true`! If **any** value in the `and` part is considered false or nil, the value of the `or` part will be used.
 				-- Because of this, the truthness of `...` must still be checked, and it is thus evaluated as a **single** value, discarding all but the first value in it.
 ```
 

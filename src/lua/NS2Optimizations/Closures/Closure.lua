@@ -31,7 +31,7 @@ end
 
 local function isWhite(c)
 	return c == space
-	    or c == tab
+		or c == tab
 end
 
 local function delimits(c)

@@ -8,14 +8,14 @@ local kLineTextureCoord = {0, 0, 64, 16}
 
 function GUIMinimapConnection:Update()
 
-    local animation = Shared.GetTime() % 1
+	local animation = Shared.GetTime() % 1
 
-    local x1Coord = kLineTextureCoord[1] - animation * (kLineTextureCoord[3] - kLineTextureCoord[1])
-    local x2Coord = x1Coord + self.length
+	local x1Coord = kLineTextureCoord[1] - animation * (kLineTextureCoord[3] - kLineTextureCoord[1])
+	local x2Coord = x1Coord + self.length
 
-    local textureIndex = 16
+	local textureIndex = 16
 
-    self.line:SetTexturePixelCoordinates(x1Coord, textureIndex, x2Coord, textureIndex + 16)
+	self.line:SetTexturePixelCoordinates(x1Coord, textureIndex, x2Coord, textureIndex + 16)
 end
 
 function GUIMinimapConnection:Initialize(parent, mini, teamNumber)

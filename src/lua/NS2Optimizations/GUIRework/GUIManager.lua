@@ -3,8 +3,8 @@ Script.Load("lua/UtilityShared.lua")
 Script.Load("lua/GUIAssets.lua")
 -- Check required because of material scripts.
 if Client and Event then
-    Script.Load("lua/menu/WindowManager.lua")
-    Script.Load("lua/InputHandler.lua")
+	Script.Load("lua/menu/WindowManager.lua")
+	Script.Load("lua/InputHandler.lua")
 end
 Script.Load("lua/GUIScript.lua")
 Script.Load("lua/GUIUtility.lua")
@@ -158,62 +158,62 @@ end
 function GUIManager.NotifyGUIItemDestroyed() end
 
 local function Update(deltaTime)
-    PROFILE("GUIManager:Update")
+	PROFILE("GUIManager:Update")
 
-    local numScripts      = #scripts
+	local numScripts      = #scripts
 
-    if numScripts == 0 then
+	if numScripts == 0 then
 	return
-    end
+	end
 
-    local now             = clock()
-    local max_update_time = now + kMaxUpdateTime
+	local now             = clock()
+	local max_update_time = now + kMaxUpdateTime
 
-    -- The first script is always executed
-    do
+	-- The first script is always executed
+	do
 	local script = scripts[nextScript]
 	if script ~= nil and script:GetShouldUpdate() then
-	    script:Update(deltaTime)
-	    local new_now = clock(deltaTime)
-	    script[qRunTime] = new_now - now
+		script:Update(deltaTime)
+		local new_now = clock(deltaTime)
+		script[qRunTime] = new_now - now
 	end
-    end
+	end
 
-    for i = nextScript+1, numScripts do
+	for i = nextScript+1, numScripts do
 	local script = scripts[i]
 
 	if script ~= nil and script:GetShouldUpdate() then
-	    local runtime = script[qRunTime]
-	    if now + runtime > max_update_time then
+		local runtime = script[qRunTime]
+		if now + runtime > max_update_time then
 		nextScript = i
 		return
-	    end
-	    script:Update(deltaTime)
-	    local new_now = clock()
+		end
+		script:Update(deltaTime)
+		local new_now = clock()
 
 			-- a bit inaccurate if lots of invisible scripts were updated in between
-	    script[qRunTime] = new_now - now
-	    now = new_now
+		script[qRunTime] = new_now - now
+		now = new_now
 	end
-    end
+	end
 
-    for i = 1, nextScript-1 do
+	for i = 1, nextScript-1 do
 	local script = scripts[i]
 
 	if script ~= nil and script:GetShouldUpdate() then
-	    local runtime = script[qRunTime]
-	    if now + runtime > max_update_time then
+		local runtime = script[qRunTime]
+		if now + runtime > max_update_time then
 		nextScript = i
 		return
-	    end
-	    script:Update(deltaTime)
-	    local new_now = clock()
+		end
+		script:Update(deltaTime)
+		local new_now = clock()
 
-	    -- a bit inaccurate if lots of invisible scripts were updated in between
-	    script[qRunTime] = new_now - now
-	    now = new_now
+		-- a bit inaccurate if lots of invisible scripts were updated in between
+		script[qRunTime] = new_now - now
+		now = new_now
 	end
-    end
+	end
 end
 
 if not Shared.GetIsRunningPrediction() then
@@ -263,6 +263,6 @@ Event.Hook("Console_script_times", function()
 end)
 
 if Event then
-    Event.Hook("UpdateClient", Update, "GUIManager")
-    Event.Hook("ResolutionChanged", function(...) GUIManager.OnResolutionChanged(nil, ...) end)
+	Event.Hook("UpdateClient", Update, "GUIManager")
+	Event.Hook("ResolutionChanged", function(...) GUIManager.OnResolutionChanged(nil, ...) end)
 end

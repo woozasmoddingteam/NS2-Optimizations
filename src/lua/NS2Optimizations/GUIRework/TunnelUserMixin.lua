@@ -11,20 +11,20 @@ local function UpdateTunnelEffects(self)
 	local isInTunnel = self.inTunnel
 
 	if self.clientIsInTunnel ~= isInTunnel then
-	
+
 		local cinematic = Client.CreateCinematic(RenderScene.Zone_ViewModel)
 		cinematic:SetCinematic(kTunnelUseScreenCinematic)
 		cinematic:SetRepeatStyle(Cinematic.Repeat_None)
-		
+
 		if isInTunnel then
 			self:TriggerEffects("tunnel_enter_2D")
 		else
 			self:TriggerEffects("tunnel_exit_2D")
 		end
-		
+
 		self.clientIsInTunnel = isInTunnel
 		self.clientTimeTunnelUsed = Shared.GetTime()
-	
+
 	end
 
 end
@@ -49,7 +49,7 @@ do
 					end
 				end
 			end
-			
+
 			self.canUseTunnel = self.timeTunnelUsed + kTunnelUseTimeout < Shared.GetTime()
 		end
 		setupvalue(TunnelUserMixin.OnUpdate, "SharedUpdate", SharedUpdate)
@@ -58,8 +58,8 @@ do
 			if self.canUseTunnel and self:GetIsEnteringTunnel() then
 				UpdateSinkIn(self, deltaTime)
 			end
-			
-			if self.GetIsLocalPlayer and self:GetIsLocalPlayer() then    
+
+			if self.GetIsLocalPlayer and self:GetIsLocalPlayer() then
 				self.inTunnel = GetIsPointInGorgeTunnel(self:GetOrigin())
 				UpdateTunnelEffects(self)
 			end

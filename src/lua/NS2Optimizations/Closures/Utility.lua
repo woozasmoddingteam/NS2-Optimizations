@@ -45,21 +45,21 @@ function EntityFilterMixin(mixinType)
 end
 
 function Copy(t)
-    if type(t) == "table" then
+	if type(t) == "table" then
 		return table.iduplicate(t)
-    elseif type(t) == "cdata" then
-        if t:isa("Vector") then
-            return Vector(t)
-        elseif t:isa("Angles") then
-            return Angles(t)
-        elseif t:isa("Coords") then
-            return Coords(t)
-        elseif t:isa("Trace") then
-            return Trace(t)
-        else
-            return t
-        end
+	elseif type(t) == "cdata" then
+		if t:isa("Vector") then
+			return Vector(t)
+		elseif t:isa("Angles") then
+			return Angles(t)
+		elseif t:isa("Coords") then
+			return Coords(t)
+		elseif t:isa("Trace") then
+			return Trace(t)
+		else
+			return t
+		end
 	else
 		return t
-    end
+	end
 end
