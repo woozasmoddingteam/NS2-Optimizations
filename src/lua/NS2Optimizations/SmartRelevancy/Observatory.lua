@@ -18,10 +18,9 @@ local old = Observatory.TriggerDistressBeacon
 
 function Observatory:TriggerDistressBeacon()
 	self:FindCommandStation()
-	local distressOrigin = self:GetDistressOrigin()
 
 	-- May happen at the end of the game?
-	if not distressOrigin or self:GetIsBeaconing() then
+	if self:GetIsBeaconing() then
 		return false, true
 	end
 
@@ -37,15 +36,11 @@ function Observatory:TriggerDistressBeacon()
 end
 
 function Observatory:PerformDistressBeacon()
-
 	self.distressBeaconSound:Stop()
 
-	local distressOrigin = self:GetDistressOrigin()
-	if not distressOrigin then
-		return
-	end
+	local commandStation = self:GetCommandStation()
 
-	local spawnPoints = GetBeaconPointsForTechPoint(self:GetCommandStation().attachedId)
+	local spawnPoints = GetBeaconPointsForTechPoint(commandStation.attachedId)
 
 	if not spawnPoints then
 		return
@@ -70,6 +65,10 @@ function Observatory:PerformDistressBeacon()
 			self.i = self.i + 1
 		end
 	]] {self:GetDistressOrigin(), spawnPoints, i = 1})
+
+	for _, ip in ipairs(GetEntitiesForTeamWithinRange("InfantryPortal", self:GetTeamNumber(), commandStation:GetOrigin(), kInfantryPortalAttachRange)) do
+		ip:FinishSpawn()
+	end
 
 	self:TriggerEffects("distress_beacon_complete")
 end
