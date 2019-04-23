@@ -1,6 +1,7 @@
 function Observatory:FindCommandStation()
-	self.nearest_commandstation = GetNearest(self:GetOrigin(), "CommandStation", self:GetTeamNumber(), Lambda [[(...):GetIsBuilt() and (...):GetIsAlive()]]):GetId()
-	return Shared.GetEntity(self.nearest_commandstation)
+	local nearest = GetNearest(self:GetOrigin(), "CommandStation", self:GetTeamNumber(), Lambda [[(...):GetIsBuilt() and (...):GetIsAlive()]])
+	self.nearest_commandstation = nearest and nearest:GetId()
+	return nearest
 end
 
 function Observatory:GetCommandStation()
