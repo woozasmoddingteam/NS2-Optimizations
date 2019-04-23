@@ -4,7 +4,7 @@ function Observatory:FindCommandStation()
 end
 
 function Observatory:GetCommandStation()
-	return Shared.GetEntity(self.nearest_commandstation) or self:FindCommandStation()
+	return self.nearest_commandstation and Shared.GetEntity(self.nearest_commandstation) or self:FindCommandStation()
 end
 
 function Observatory:GetDistressOrigin()
