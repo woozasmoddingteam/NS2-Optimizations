@@ -1,18 +1,18 @@
-#About
+# About
 This mod just improves performance in NS2 (a game).
 
-#Configuration
+# Configuration
 Both the client and the server will have a file called either NS2OptiServer.json
 or NS2OptiClient.json in the NS2 configuration directory. It has various self-explanatory
 options, which you might want to tinker with.
 
-#Optimizations
+# Optimizations
 
-##Closure optimizations
+## Closure optimizations
 Lots of code that allocated closures now use a table trick.
 Very compatible with other mods.
 
-##Fast mixin
+## Fast mixin
 This makes mixin initialisation a lot faster, *though* it depends
 on the fact, that most code only does **static** initialisation
 of mixins, i.e. the mixins initialised does **not** change from entity
@@ -23,7 +23,7 @@ Outside of these two methods, you have free reign, but it **will** have a perfor
 
 Obviously this will have problems with some mods.
 
-##GUI rework
+## GUI rework
 This is a complete rewrite of the GUIManager class and eventually also
 of the entire minimap system. However, the minimap system has not been worked on
 in some time due to my laziness.
@@ -36,7 +36,7 @@ so be aware of misfunctioning code.
 If you are aware of any such mod, please do contact me, so that I may add an exception for
 this particular mod.
 
-##Smart relevancy
+## Smart relevancy
 NS2's netcode is obviously not very good (it's rather awful), and events such
 as beacons will cause lag, due to many entities becoming relevant to many clients all
 at once.
@@ -50,7 +50,7 @@ you may find NS2 counter-intuitive.
 This is quite compatible with other mods, just like the closure optimisations, so you
 should have few worries.
 
-##Tech
+## Tech
 This change just optimises tech data look-ups. A tech data look-up could e.g. be
 checking the health of a particular technology, such as a hive.
 It could be the amount of armor, whether it needs infestation, or if it needs
