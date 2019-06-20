@@ -1,3 +1,7 @@
+# About
+This mod just improves performance in NS2 (a game).
+**NB:** The mod has been pretty much merged into vanilla, and as such there is no reason to use this anymore.
+
 # License
 
 This project (NS2 Optimizations) in its entirety is licensed under the MIT
@@ -21,9 +25,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
-
-# About
-This mod just improves performance in NS2 (a game).
 
 # Configuration
 Both the client and the server will have a file called either NS2OptiServer.json
