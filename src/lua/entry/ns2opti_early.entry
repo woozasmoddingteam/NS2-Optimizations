@@ -1,6 +1,9 @@
-
-modEntry = {
-	FileHooks = "lua/NS2Optimizations/FileHooks_Early.lua",
-	Shared    = "lua/NS2Optimizations/Shared_Early.lua",
-	Priority = 1000
-}
+if Shared.GetBuildNumber() > 327 then
+	modEntry = {
+		FileHooks = "lua/NS2Optimizations/FileHooks_Early.lua",
+		Shared    = "lua/NS2Optimizations/Shared_Early.lua",
+		Priority = 1000
+	}
+else
+	modEntry = {}
+end
