@@ -1,8 +1,8 @@
 if Shared.GetBuildNumber() > 327 then
+	modEntry = {}
+else
 	modEntry = {
 	   FileHooks = "lua/NS2Optimizations/FileHooks.lua",
 	   Priority = 0
 	}
-else
-	modEntry = {}
 end
